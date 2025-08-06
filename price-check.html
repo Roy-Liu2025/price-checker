@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  // 从网址中提取价格参数
+  const url = new URL(window.location.href);
+  const price = url.searchParams.get("price");
+  
+  function checkPwd() {
+    if(document.getElementById("pwd").value === "123") {
+      alert("验证成功！价格是：" + price);
+    } else {
+      alert("密码错误！");
+    }
+  }
+</script>
+
+<h3>请输入访问密码：</h3>
+<input type="password" id="pwd" placeholder="输入密码123">
+<button onclick="checkPwd()">确认</button>
+</body>
+</html>
