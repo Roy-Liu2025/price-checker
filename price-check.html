@@ -3,100 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>价格验证系统</title>
+    <title>授权访问验证</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        body { 
+            font-family: Arial, sans-serif; 
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             margin: 0;
             background-color: #f5f5f5;
         }
         .container {
             background: white;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             width: 90%;
             max-width: 400px;
             text-align: center;
         }
         h3 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
             color: #333;
+            margin-bottom: 20px;
         }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #pwd {
+        input {
             padding: 12px;
-            font-size: 1.2rem;
-            border: 2px solid #ddd;
-            border-radius: 5px;
             width: 100%;
-            max-width: 300px;
-            margin-bottom: 15px;
             box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 16px;
         }
         button {
-            padding: 12px 25px;
-            font-size: 1.2rem;
-            background-color: #4CAF50;
+            padding: 12px 24px;
+            background-color: #2c3e50;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            align-self: flex-end; /* 按钮右对齐 */
-            margin-right: 10%; /* 向右偏移10% */
+            font-size: 16px;
+            width: 100%;
         }
-        button:hover {
-            background-color: #45a049;
-        }
-        @media (max-width: 480px) {
-            h3 {
-                font-size: 1.3rem;
-            }
-            #pwd, button {
-                font-size: 1.1rem;
-            }
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>请输入访问密码：</h3>
-        <div class="input-group">
-            <input type="password" id="pwd" placeholder="刘明提醒:请输入密码">
-            <button onclick="checkPwd()">确认</button>
-        </div>
+        <h3>刘明提醒：请输入动态访问密码</h3>
+        <input type="password" id="pwd" placeholder="请输入授权密码">
+        <button onclick="checkPwd()">验证身份</button>
+        <div id="errorMsg" class="error"></div>
     </div>
 
     <script>
-        // 从网址中提取价格参数
-        const url = new URL(window.location.href);
-        const price = url.searchParams.get("price");
-        
+        // 生成严格保密的动态密码
+        function generateDailyPassword() {
+            const today = new Date();
+            return today.getFullYear() * (today.getMonth() + 1) * today.getDate();
+        }
+
+        // 密码验证（无任何提示）
         function checkPwd() {
-            if(document.getElementById("pwd").value === "123") {
-                alert("验证成功！价格是：" + price);
+            const errorElement = document.getElementById("errorMsg");
+            errorElement.style.display = "none";
+            
+            const userInput = parseInt(document.getElementById("pwd").value);
+            const correctPwd = generateDailyPassword();
+            
+            if (userInput === correctPwd) {
+                const url = new URL(window.location.href);
+                const price = url.searchParams.get("price");
+                alert("身份验证成功\n授权数据：" + price);
             } else {
-                alert("密码错误！");
+                errorElement.innerText = "密码无效，请重新输入";
+                errorElement.style.display = "block";
                 document.getElementById("pwd").value = "";
-                document.getElementById("pwd").focus();
             }
         }
-        
-        // 页面加载后自动聚焦到输入框
+
+        // 自动聚焦输入框
         window.onload = function() {
             document.getElementById("pwd").focus();
         };
     </script>
 </body>
 </html>
-
