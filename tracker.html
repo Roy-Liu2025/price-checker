@@ -3,67 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件交接确认</title>
+    <title>文件传递追踪</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; background-color: #f0f2f5; }
-        .card { background: white; max-width: 400px; margin: 50px auto; padding: 30px; border-radius: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
-        button { background: #238636; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; }
-        #fileId { font-weight: bold; color: #1f6feb; }
-        #status { margin-top: 15px; min-height: 20px; }
+        body { font-family: Arial, text-align: center; margin-top: 50px; }
+        .result { color: green; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>📦 文件交接确认</h2>
-        <p>正在登记：<span id="fileId"></span></p>
-        <button onclick="submitRecord()">✅ 确认发送记录</button>
-        <div id="status"></div>
+    <div id="app">
+        <h2>文件交接登记</h2>
+        <p>文件：<span id="fileId"></span></p>
+        <div id="status">提交中...</div>
     </div>
 
     <script>
-        // 自动提取文件标识
-        const fileId = new URLSearchParams(window.location.search).get('file');
-        document.getElementById("fileId").textContent = fileId || '未知文件';
+        // 从URL获取文件标识
+        const url = new URL(window.location.href);
+        const fileId = url.searchParams.get("file");
+        document.getElementById("fileId").textContent = fileId;
 
+        // 自动提交记录到GitHub
         async function submitRecord() {
-            const btn = document.querySelector("button");
-            const statusEl = document.getElementById("status");
-            btn.disabled = true;
-            statusEl.innerHTML = '<p style="color:#666">提交中...</p>';
+            const timestamp = new Date().toISOString();
+            const record = {
+                file: fileId,
+                user: "微信用户", // 实际使用需用微信API获取昵称
+                time: timestamp
+            };
 
             try {
-                const timestamp = new Date().toLocaleString('zh-CN');
-                const response = await fetch(
-                    `https://api.github.com/repos/roy-liu2025/price-checker/contents/logs/${encodeURIComponent(fileId)}.json`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': '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',
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
-                        },
-                        body: JSON.stringify({
-                            message: `[文件追踪] ${fileId}`,
-                            content: btoa(unescape(encodeURIComponent(JSON.stringify({
-                                file: fileId,
-                                timestamp: timestamp,
-                                device: navigator.userAgent
-                            })))
-                        })
-                    }
-                );
+                // 提交到GitHub（需替换你的仓库信息）
+                const response = await fetch('https://api.github.com/repos/roy-liu2025/price-checker/contents/logs/' + fileId + '.json', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': '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',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: "新增传递记录: " + fileId,
+                        content: btoa(JSON.stringify(record))
+                    })
+                });
 
-                if (response.ok) {
-                    statusEl.innerHTML = '<p style="color:#238636">✔ 记录已安全存储</p>';
-                } else {
-                    throw new Error('API响应异常');
-                }
+                document.getElementById("status").innerHTML = `
+                    <p class="result">✅ 登记成功！</p>
+                    <p>文件：${fileId}</p>
+                    <p>时间：${new Date(timestamp).toLocaleString()}</p>
+                `;
             } catch (error) {
-                statusEl.innerHTML = '<p style="color:#da3633">✖ 提交失败，请截图此页面联系管理员</p>';
-                btn.disabled = false;
-                console.error('提交错误:', error);
+                document.getElementById("status").textContent = "❌ 登记失败，请截图联系管理员";
             }
         }
+
+        // 页面加载后自动提交
+        window.onload = submitRecord;
     </script>
 </body>
 </html>
