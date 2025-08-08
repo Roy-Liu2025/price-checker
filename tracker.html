@@ -1,46 +1,69 @@
-<script>
-async function submitRecord() {
-    const btn = document.querySelector("button");
-    const statusEl = document.getElementById("status");
-    btn.disabled = true;
-    statusEl.innerHTML = '<p style="color:#666">提交中...</p>';
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件交接确认</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; background-color: #f0f2f5; }
+        .card { background: white; max-width: 400px; margin: 50px auto; padding: 30px; border-radius: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        button { background: #238636; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        #fileId { font-weight: bold; color: #1f6feb; }
+        #status { margin-top: 15px; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📦 文件交接确认</h2>
+        <p>正在登记：<span id="fileId"></span></p>
+        <button onclick="submitRecord()">✅ 确认发送记录</button>
+        <div id="status"></div>
+    </div>
 
-    // 调试：打印当前文件标识和 Token（检查拼写）
-    console.log("FileID:", fileId);
-    console.log("Token:", 'ghp_你的Token');
+    <script>
+        // 自动提取文件标识
+        const fileId = new URLSearchParams(window.location.search).get('file');
+        document.getElementById("fileId").textContent = fileId || '未知文件';
 
-    try {
-        const response = await fetch(
-            `https://api.github.com/repos/roy-liu2025/price-checker/contents/logs/${encodeURIComponent(fileId)}.json`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': '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', // 确保替换为最新 Token
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.v3+json'
-                },
-                body: JSON.stringify({
-                    message: `[记录] ${fileId}`,
-                    content: btoa(unescape(encodeURIComponent(JSON.stringify({
-                        file: fileId,
-                        time: new Date().toLocaleString()
-                    })))
-                })
+        async function submitRecord() {
+            const btn = document.querySelector("button");
+            const statusEl = document.getElementById("status");
+            btn.disabled = true;
+            statusEl.innerHTML = '<p style="color:#666">提交中...</p>';
+
+            try {
+                const timestamp = new Date().toLocaleString('zh-CN');
+                const response = await fetch(
+                    `https://api.github.com/repos/roy-liu2025/price-checker/contents/logs/${encodeURIComponent(fileId)}.json`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': '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',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: `[文件追踪] ${fileId}`,
+                            content: btoa(unescape(encodeURIComponent(JSON.stringify({
+                                file: fileId,
+                                timestamp: timestamp,
+                                device: navigator.userAgent
+                            })))
+                        })
+                    }
+                );
+
+                if (response.ok) {
+                    statusEl.innerHTML = '<p style="color:#238636">✔ 记录已安全存储</p>';
+                } else {
+                    throw new Error('API响应异常');
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<p style="color:#da3633">✖ 提交失败，请截图此页面联系管理员</p>';
+                btn.disabled = false;
+                console.error('提交错误:', error);
             }
-        );
-
-        // 调试：打印 API 响应
-        const data = await response.json();
-        console.log("API 响应:", data);
-
-        if (response.ok) {
-            statusEl.innerHTML = '<p style="color:#238636">✔ 记录已安全存储</p>';
-        } else {
-            throw new Error(data.message || "未知错误");
         }
-    } catch (error) {
-        statusEl.innerHTML = `<p style="color:#da3633">✖ 提交失败: ${error.message}</p>`;
-        btn.disabled = false;
-    }
-}
-</script>
+    </script>
+</body>
+</html>
