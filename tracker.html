@@ -6,7 +6,7 @@
     <title>文件交接确认</title>
     <style>
         body {
-            font-family: Times New Roman, sans-serif;
+            font-family: "Times New Roman", sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
@@ -48,10 +48,15 @@
             position: absolute;
             bottom: 15px;
             right: 20px;
-            font-family: 'Times New Roman', Gadget, sans-serif;
+            font-family: "Times New Roman", sans-serif;
             font-size: 24px;
             color: red;
             font-weight: bold;
+        }
+        #resultMsg {
+            min-height: 50px;
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -63,7 +68,7 @@
         <input type="text" id="userInput" placeholder="请输入您的姓名" required>
         
         <button id="submitBtn">确认接收</button>
-        <p id="resultMsg" style="min-height:50px;text-align:center;"></p>
+        <p id="resultMsg"></p>
         
         <div class="porite-logo">porite</div>
     </div>
@@ -74,21 +79,44 @@
         const fileId = urlParams.get('file');
         document.getElementById("fileInfo").textContent = `文件编号：${fileId}`;
 
-        // 邮件内容生成（纯文本表格格式）
+        // 邮件内容生成函数（VALUE列宽度2倍优化版）
         function getEmailContent(fileId, userName, time) {
+            // 计算字符串显示宽度（中文算2个字符）
+            const getDisplayWidth = (str) => {
+                return str.split('').reduce((total, char) => {
+                    return total + (char.match(/[^\x00-\xff]/) ? 2 : 1);
+                }, 0);
+            };
+
+            // 生成固定宽度行
+            const formatLine = (name, value) => {
+                const nameWidth = 15;  // NAME列基础宽度
+                const valueWidth = 40; // VALUE列宽度（原20的2倍）
+                
+                // 对齐处理（考虑中文字符）
+                let namePadding = nameWidth - getDisplayWidth(name);
+                let valuePadding = valueWidth - getDisplayWidth(value);
+                
+                return name + ' '.repeat(Math.max(0, namePadding)) + 
+                       value + ' '.repeat(Math.max(0, valuePadding));
+            };
+
+            // 分隔线（长度与表格匹配）
+            const separator = '─'.repeat(55);
+            
             return `
 文件接收确认详情：
-────────────────────────────────────────────────
-NAME          VALUE
-────────────────────────────────────────────────
-文件名称      ${fileId}
-接受人员      ${userName}
-接受时间      ${time}
-────────────────────────────────────────────────
-            `;
+${separator}
+${formatLine('NAME', 'VALUE')}
+${separator}
+${formatLine('文件名称', fileId)}
+${formatLine('接受人员', userName)}
+${formatLine('接受时间', time)}
+${separator}
+            `.trim();
         }
 
-        // 提交处理（改用text/plain格式）
+        // 提交处理
         document.getElementById("submitBtn").addEventListener('click', async () => {
             const btn = document.getElementById("submitBtn");
             const userName = document.getElementById("userInput").value.trim();
@@ -106,7 +134,8 @@ NAME          VALUE
                 month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
 
             try {
@@ -138,9 +167,17 @@ NAME          VALUE
                 btn.textContent = "确认接收";
             }
         });
+
+        // 测试输出（开发时验证格式）
+        console.log(getEmailContent(
+            "250808_22888809-1_量产资料", 
+            "张三", 
+            "2025/08/09 10:05:23"
+        ));
     </script>
 </body>
 </html>
+
 
 
 
