@@ -80,6 +80,10 @@
             font-weight: bold;
             z-index: 1000;
         }
+        .success-msg {
+            color: green;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -89,9 +93,9 @@
         <table class="file-table">
             <thead>
                 <tr>
-                    <th>文件名称</th>
-                    <th>接受人员</th>
-                    <th>接受时间</th>
+                    <th>文件</th>
+                    <th>人员</th>
+                    <th>时间</th>
                 </tr>
             </thead>
             <tbody>
@@ -117,9 +121,16 @@
         const fileId = urlParams.get('file') || '未指定文件';
         document.getElementById("filename-cell").textContent = fileId;
 
-        // 检查本地存储判断是否已提交
+        // 检查提交状态
         const submitBtn = document.getElementById("submitBtn");
-        if(localStorage.getItem('formSubmitted') === 'true') {
+        const resultMsg = document.getElementById("resultMsg");
+        
+        // 从URL中检查是否已提交
+        if(urlParams.has('submitted')) {
+            showSuccessMessage();
+            disableSubmitButton();
+        } else if(localStorage.getItem('formSubmitted') === 'true') {
+            showSuccessMessage();
             disableSubmitButton();
         }
 
@@ -151,7 +162,6 @@
             document.getElementById("time-cell").textContent = timestamp;
 
             try {
-                // 邮件正文（分隔线缩短1/6，原55字符现改为46字符）
                 const separator = '─'.repeat(46);
                 const emailContent = `
 文件接收确认详情：
@@ -176,31 +186,58 @@ ${separator}
                         _replyto: "lium@porite.com.cn",
                         _cc: "lium@porite.com.cn",
                         message: emailContent,
-                        _format: "plain" // 使用纯文本格式确保兼容性
+                        _format: "plain"
                     })
                 });
                 
                 const result = await response.json();
                 
-                document.getElementById("resultMsg").innerHTML = response.ok ? 
-                    '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>' : 
-                    '<span style="color:red;font-weight:bold;">❌ 提交失败，请截图联系管理员</span>';
+                if(response.ok) {
+                    showSuccessMessage();
+                    // 添加URL参数防止刷新丢失状态
+                    window.history.replaceState({}, '', `${window.location.pathname}?file=${encodeURIComponent(fileId)}&submitted=true`);
+                } else {
+                    showErrorMessage('❌ 提交失败，请截图联系管理员');
+                    resetSubmitButton();
+                }
                 
             } catch (error) {
-                document.getElementById("resultMsg").innerHTML = 
-                    '<span style="color:red;font-weight:bold;">❌ 网络错误，请检查连接</span>';
-                // 出错时恢复按钮状态
-                localStorage.removeItem('formSubmitted');
-                submitBtn.disabled = false;
-                submitBtn.textContent = "确认接收";
+                showErrorMessage('❌ 网络错误，请检查连接');
+                resetSubmitButton();
             }
         });
 
-        // 禁用提交按钮函数
+        // 显示成功消息
+        function showSuccessMessage() {
+            resultMsg.innerHTML = '<span class="success-msg">✅ 接收确认已发送</span>';
+            // 更新表格中的接受人员和接受时间（从localStorage恢复）
+            const storedData = JSON.parse(localStorage.getItem('formData') || {};
+            if(storedData.userName) {
+                document.getElementById("receiver-cell").textContent = storedData.userName;
+            }
+            if(storedData.timestamp) {
+                document.getElementById("time-cell").textContent = storedData.timestamp;
+            }
+        }
+
+        // 显示错误消息
+        function showErrorMessage(msg) {
+            resultMsg.innerHTML = `<span style="color:red;font-weight:bold;">${msg}</span>`;
+        }
+
+        // 禁用提交按钮
         function disableSubmitButton() {
             submitBtn.disabled = true;
             submitBtn.textContent = "已确认";
             submitBtn.style.backgroundColor = "#999999";
+        }
+
+        // 重置提交按钮
+        function resetSubmitButton() {
+            localStorage.removeItem('formSubmitted');
+            submitBtn.disabled = false;
+            submitBtn.textContent = "确认接收";
+            submitBtn.style.backgroundColor = "#4CAF50";
         }
 
         // 初始化时间显示
@@ -215,5 +252,6 @@ ${separator}
     </script>
 </body>
 </html>
+
 
 
