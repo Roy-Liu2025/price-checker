@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -137,7 +136,22 @@
             submitBtn.textContent = "发送中...";
             
             try {
-                // 邮件正文（纯文本格式，确保无乱码）
+                // 邮件HTML内容（严格按格式要求）
+                const emailHTMLContent = `
+<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h3 style="margin-bottom: 10px;">文件接收确认详情：</h3>
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;">
+    <p style="margin: 8px 0;"><strong>文件名称：</strong>${fileName}</p>
+    <p style="margin: 8px 0;"><strong>接受人员：</strong>${userName}</p>
+    <p style="margin: 8px 0;"><strong>接受时间：</strong>${timestamp}</p>
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;">
+    <p style="text-align: right; color: red; font-family: 'Times New Roman'; font-size: 24px; font-weight: bold; margin: 0;">
+        porite
+    </p>
+</div>
+                `.trim();
+
+                // 纯文本内容（兼容备用）
                 const emailTextContent = `
 文件接收确认详情：
 ────────────────────────
@@ -145,24 +159,9 @@
 接受人员：${userName}
 接受时间：${timestamp}
 ────────────────────────
-                `.trim() + "\n" + " ".repeat(30) + "porite"; // 右对齐porite
+                `.trim() + "\n" + " ".repeat(30) + "porite";
 
-                // 邮件HTML格式（兼容性备用）
-                const emailHTMLContent = `
-<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-    <h3>文件接收确认详情：</h3>
-    <hr style="border-top: 1px solid #ddd;">
-    <p><strong>文件名称：</strong>${fileName}</p>
-    <p><strong>接受人员：</strong>${userName}</p>
-    <p><strong>接受时间：</strong>${timestamp}</p>
-    <hr style="border-top: 1px solid #ddd;">
-    <p style="text-align: right; color: red; font-family: 'Times New Roman'; font-size: 24px; font-weight: bold;">
-        porite
-    </p>
-</div>
-                `.trim();
-
-                // 发送请求（同时提交纯文本和HTML版本）
+                // 发送邮件
                 await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
                     headers: { 
@@ -172,8 +171,8 @@
                     body: JSON.stringify({
                         _template: "html",
                         _subject: `【文件接收】${fileName} - ${userName}`,
-                        message: emailHTMLContent,  // HTML版本
-                        text: emailTextContent      // 纯文本版本（防兼容性问题）
+                        message: emailHTMLContent,
+                        text: emailTextContent
                     })
                 });
 
@@ -186,6 +185,8 @@
                 resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请检查网络</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = "确认接收";
+                document.getElementById("receiver-cell").textContent = "????";
+                document.getElementById("time-cell").textContent = "待确认";
             }
         });
     </script>
