@@ -6,7 +6,7 @@
     <title>文件交接确认</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Times New Roman, sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
@@ -48,7 +48,7 @@
             position: absolute;
             bottom: 15px;
             right: 20px;
-            font-family: 'Elephant', Gadget, sans-serif;
+            font-family: 'Times New Roman', Gadget, sans-serif;
             font-size: 24px;
             color: red;
             font-weight: bold;
@@ -78,13 +78,13 @@
         function getEmailContent(fileId, userName, time) {
             return `
 文件接收确认详情：
-───────────────────────
+────────────────────────────────────────────────
 NAME          VALUE
-───────────────────────
+────────────────────────────────────────────────
 文件名称      ${fileId}
 接受人员      ${userName}
 接受时间      ${time}
-───────────────────────
+────────────────────────────────────────────────
             `;
         }
 
@@ -141,6 +141,7 @@ NAME          VALUE
     </script>
 </body>
 </html>
+
 
 
 
