@@ -6,10 +6,12 @@
     <title>文件交接确认</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Times New Roman", sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
+            position: relative;
+            min-height: 100vh;
         }
         .container {
             max-width: 500px;
@@ -18,8 +20,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative; /* 关键：为绝对定位提供参照 */
-            min-height: 300px; /* 确保容器有足够高度 */
+            position: relative;
         }
         input {
             padding: 12px;
@@ -45,20 +46,30 @@
             margin-right: auto;
             cursor: pointer;
         }
+        .porite-logo {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-family: "Times New Roman", sans-serif;
+            font-size: 24px;
+            color: red;
+            font-weight: bold;
+        }
         #resultMsg {
             min-height: 50px;
             text-align: center;
             margin-top: 20px;
         }
-        /* 新增的porite样式 */
-        .porite-brand {
-            position: absolute;
-            bottom: 15px;
+        /* 新增的固定右下角porite样式 */
+        .fixed-porite {
+            position: fixed;
+            bottom: 20px;
             right: 20px;
-            font-family: "Times New Roman", serif; /* 罗马字体 */
-            font-size: 24px; /* 24号字 */
-            color: red; /* 红色 */
+            font-family: "Times New Roman", Times, serif;
+            font-size: 24px;
+            color: red;
             font-weight: bold;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -72,9 +83,11 @@
         <button id="submitBtn">确认接收</button>
         <p id="resultMsg"></p>
         
-        <!-- 这是新增的porite标识 -->
-        <div class="porite-brand">porite</div>
+        <div class="porite-logo">porite</div>
     </div>
+
+    <!-- 新增的固定右下角porite元素 -->
+    <div class="fixed-porite">porite</div>
 
     <script>
         // 从URL获取文件标识
@@ -82,16 +95,41 @@
         const fileId = urlParams.get('file');
         document.getElementById("fileInfo").textContent = `文件编号：${fileId}`;
 
-        // 邮件内容生成（纯文本格式）
+        // 邮件内容生成函数（VALUE列宽度2倍优化版）
         function getEmailContent(fileId, userName, time) {
+            // 计算字符串显示宽度（中文算2个字符）
+            const getDisplayWidth = (str) => {
+                return str.split('').reduce((total, char) => {
+                    return total + (char.match(/[^\x00-\xff]/) ? 2 : 1);
+                }, 0);
+            };
+
+            // 生成固定宽度行
+            const formatLine = (name, value) => {
+                const nameWidth = 15;  // NAME列基础宽度
+                const valueWidth = 40; // VALUE列宽度（原20的2倍）
+                
+                // 对齐处理（考虑中文字符）
+                let namePadding = nameWidth - getDisplayWidth(name);
+                let valuePadding = valueWidth - getDisplayWidth(value);
+                
+                return name + ' '.repeat(Math.max(0, namePadding)) + 
+                       value + ' '.repeat(Math.max(0, valuePadding));
+            };
+
+            // 分隔线（长度与表格匹配）
+            const separator = '─'.repeat(55);
+            
             return `
 文件接收确认详情：
-────────────────────────────────────────────────
-文件名称: ${fileId}
-接受人员: ${userName}
-接受时间: ${time}
-────────────────────────────────────────────────
-            `;
+${separator}
+${formatLine('NAME', 'VALUE')}
+${separator}
+${formatLine('文件名称', fileId)}
+${formatLine('接受人员', userName)}
+${formatLine('接受时间', time)}
+${separator}
+            `.trim();
         }
 
         // 提交处理
@@ -112,7 +150,8 @@
                 month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
 
             try {
@@ -144,12 +183,13 @@
                 btn.textContent = "确认接收";
             }
         });
+
+        // 测试输出（开发时验证格式）
+        console.log(getEmailContent(
+            "250808_22888809-1_量产资料", 
+            "张三", 
+            "2025/08/09 10:05:23"
+        ));
     </script>
 </body>
 </html>
-
-
-
-
-
-
