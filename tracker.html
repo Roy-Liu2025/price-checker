@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -119,38 +120,49 @@
                 return;
             }
             
-            // 更新界面显示
+            // 更新时间显示格式
             const timestamp = new Date().toLocaleString('zh-CN', {
                 year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit'
-            }).replace(/\//g, '/');
-            
+                minute: '2-digit',
+                hour12: false
+            }).replace(/\//g, '-');
+
+            // 更新界面
             document.getElementById("receiver-cell").textContent = userName;
             document.getElementById("time-cell").textContent = timestamp;
-            
-            // 禁用按钮防止重复提交
             submitBtn.disabled = true;
             submitBtn.textContent = "发送中...";
             
             try {
-                // 邮件正文（确保porite右对齐显示）
-                const formattedEmailContent = `
-                    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                        <h3>文件接收确认详情：</h3>
-                        <hr>
-                        <p><strong>文件名称：</strong>${fileName}</p>
-                        <p><strong>接受人员：</strong>${userName}</p>
-                        <p><strong>接受时间：</strong>${timestamp}</p>
-                        <hr>
-                        <p style="text-align: right; color: red; font-family: 'Times New Roman'; font-size: 24px; font-weight: bold;">
-                            porite
-                        </p>
-                    </div>
+                // 邮件正文（纯文本格式，确保无乱码）
+                const emailTextContent = `
+文件接收确认详情：
+────────────────────────
+文件名称：${fileName}
+接受人员：${userName}
+接受时间：${timestamp}
+────────────────────────
+                `.trim() + "\n" + " ".repeat(30) + "porite"; // 右对齐porite
+
+                // 邮件HTML格式（兼容性备用）
+                const emailHTMLContent = `
+<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h3>文件接收确认详情：</h3>
+    <hr style="border-top: 1px solid #ddd;">
+    <p><strong>文件名称：</strong>${fileName}</p>
+    <p><strong>接受人员：</strong>${userName}</p>
+    <p><strong>接受时间：</strong>${timestamp}</p>
+    <hr style="border-top: 1px solid #ddd;">
+    <p style="text-align: right; color: red; font-family: 'Times New Roman'; font-size: 24px; font-weight: bold;">
+        porite
+    </p>
+</div>
                 `.trim();
 
+                // 发送请求（同时提交纯文本和HTML版本）
                 await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
                     headers: { 
@@ -159,18 +171,19 @@
                     },
                     body: JSON.stringify({
                         _template: "html",
-                        _subject: `【文件接收】 - ${fileName}_${userName}`,
-                        message: formattedEmailContent
+                        _subject: `【文件接收】${fileName} - ${userName}`,
+                        message: emailHTMLContent,  // HTML版本
+                        text: emailTextContent      // 纯文本版本（防兼容性问题）
                     })
                 });
-                
-                // 更新界面
+
+                // 成功反馈
                 submitBtn.textContent = "已发送";
                 resultMsg.innerHTML = '<span style="color:green;">✅ 接收确认已发送</span>';
-                
+
             } catch (error) {
-                // 失败时恢复表单
-                resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请重试</span>';
+                // 失败处理
+                resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请检查网络</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = "确认接收";
             }
