@@ -4,84 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件交接确认</title>
+    <!-- 强制加载Elephant字体 -->
+    <style>
+        @font-face {
+            font-family: 'Elephant';
+            src: url('https://fonts.cdnfonts.com/css/elephant') format('woff2');
+            font-display: swap;
+        }
+    </style>
     <style>
         body { 
             font-family: Arial, sans-serif; 
             text-align: center; 
             margin-top: 50px; 
             position: relative;
+            background-color: #f5f5f5;
         }
         .container { 
-            max-width: 500px;  /* 加宽表单 */
+            max-width: 500px;
             margin: 0 auto; 
             padding: 25px; 
             border: 1px solid #ddd; 
             border-radius: 8px;
-            position: relative;  /* 为右下角logo定位 */
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 300px;
+        }
+        input {
+            padding: 12px;
+            width: 90%;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
         }
         button { 
-            padding: 12px 25px; 
+            padding: 12px 30px; 
             background: #4CAF50; 
             color: white; 
             border: none; 
             border-radius: 6px; 
             cursor: pointer; 
             font-size: 16px;
-            margin-top: 15px;
+            margin-top: 20px;
+            transition: background 0.3s;
         }
-        input {
-            padding: 10px;
-            width: 85%;  /* 加宽输入框 */
-            margin: 12px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
+        button:hover {
+            background: #45a049;
         }
-        .porite-logo {
+        .porite-brand {
             position: absolute;
             bottom: 15px;
             right: 20px;
-            font-family: "Elephant", "STXingkai", "KaiTi", sans-serif; /* 字体回退方案 */
+            font-family: "Elephant", "华文琥珀", "STXingkai", sans-serif;
             font-size: 24px;
             color: red;
             font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         /* 邮件表格样式 */
-        .email-table {
-            width: 100%;
-            border-collapse: collapse;
+        .email-template {
+            width: 80%;
             margin: 0 auto;
             text-align: center;
+            border-collapse: collapse;
         }
-        .email-table td {
-            padding: 8px;
+        .email-template td {
+            padding: 12px;
             border: 1px solid #e0e0e0;
         }
-        .name-col {
-            width: 40%;  /* 加宽NAME列 */
+        .email-template .name-col {
+            width: 120px;  /* 固定NAME列宽 */
+            background: #f9f9f9;
         }
-        .value-col {
-            width: 60%;  /* 缩窄VALUE列 */
+        .email-template .value-col {
+            width: 180px;  /* 固定VALUE列宽 */
         }
     </style>
-    <!-- 预加载Elephant字体 -->
-    <link href="https://fonts.cdnfonts.com/css/elephant" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h2>文件接收确认</h2>
-        <p id="fileInfo" style="font-size: 18px; margin-bottom: 20px;"></p>
+        <h2 style="color: #333;">文件接收确认</h2>
+        <p id="fileInfo" style="font-size: 18px; margin: 20px 0;"></p>
         
         <input type="text" id="userInput" placeholder="请输入您的姓名" required>
         
         <button id="submitBtn" onclick="sendEmailNotification()">确认接收</button>
-        <p id="resultMsg" style="min-height: 50px;"></p>
+        <p id="resultMsg" style="min-height: 60px; margin-top: 20px;"></p>
         
-        <!-- 右下角logo -->
-        <div class="porite-logo">porite</div>
+        <!-- 右下角品牌标识 -->
+        <div class="porite-brand">porite</div>
     </div>
 
     <script>
+        // 强制预加载字体
+        const fontLoader = document.createElement('div');
+        fontLoader.style.fontFamily = 'Elephant';
+        fontLoader.style.position = 'absolute';
+        fontLoader.style.opacity = '0';
+        fontLoader.textContent = '.';
+        document.body.appendChild(fontLoader);
+
         // 从URL获取文件标识
         const urlParams = new URLSearchParams(window.location.search);
         const fileId = urlParams.get('file');
@@ -105,17 +129,30 @@
                 month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+                minute: '2-digit'
             });
 
-            // 邮件HTML内容（表格居中显示）
+            // 邮件HTML内容（精简版）
             const emailContent = `
-                <table class="email-table">
-                    <tr><td class="name-col">文件编号</td><td class="value-col">${fileId}</td></tr>
-                    <tr><td>接收人员</td><td>${userName}</td></tr>
-                    <tr><td>接收时间</td><td>${timestamp}</td></tr>
+                <table class="email-template">
+                    <tr>
+                        <td class="name-col">文件编号</td>
+                        <td class="value-col">${fileId}</td>
+                    </tr>
+                    <tr>
+                        <td class="name-col">接收人员</td>
+                        <td class="value-col">${userName}</td>
+                    </tr>
+                    <tr>
+                        <td class="name-col">接收时间</td>
+                        <td class="value-col">${timestamp}</td>
+                    </tr>
                 </table>
+                <p style="text-align:center;margin-top:20px;">
+                    <span style="font-family:'Elephant','华文琥珀',sans-serif;color:red;font-size:18px;">
+                        porite
+                    </span>
+                </p>
             `;
 
             const emailData = {
@@ -140,16 +177,16 @@
                 
                 if (response.ok && result.success === "true") {
                     document.getElementById("resultMsg").innerHTML = `
-                        <span style="color:green">✅ 接收确认已发送</span><br>
-                        <small>${timestamp}</small>
+                        <span style="color:green;font-weight:bold;">✅ 接收确认已发送</span><br>
+                        <small style="color:#666;">${timestamp}</small>
                     `;
                 } else {
                     throw new Error(result.message || "邮件发送失败");
                 }
             } catch (error) {
                 document.getElementById("resultMsg").innerHTML = `
-                    <span style="color:red">❌ 提交失败</span><br>
-                    <small>${error.message || '请直接联系管理员'}</small>
+                    <span style="color:red;font-weight:bold;">❌ 提交失败</span><br>
+                    <small style="color:#666;">${error.message || '请直接联系管理员'}</small>
                 `;
             } finally {
                 btn.disabled = false;
@@ -157,8 +194,5 @@
             }
         }
     </script>
-
-    <!-- 强制预加载字体 -->
-    <div style="font-family: 'Elephant'; opacity: 0; position: absolute;">.</div>
 </body>
 </html>
