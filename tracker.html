@@ -5,35 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件交接确认</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; position: relative; }
-        .container { max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:disabled { background: #cccccc; }
-        .porite {
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin-top: 50px; 
+            position: relative;
+        }
+        .container { 
+            max-width: 500px;  /* 加宽表单 */
+            margin: 0 auto; 
+            padding: 25px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px;
+            position: relative;  /* 为右下角logo定位 */
+        }
+        button { 
+            padding: 12px 25px; 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        input {
+            padding: 10px;
+            width: 85%;  /* 加宽输入框 */
+            margin: 12px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .porite-logo {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            font-family: "Elephant", sans-serif;
+            bottom: 15px;
+            right: 20px;
+            font-family: "Elephant", "STXingkai", "KaiTi", sans-serif; /* 字体回退方案 */
             font-size: 24px;
             color: red;
+            font-weight: bold;
         }
-        #userInput {
+        /* 邮件表格样式 */
+        .email-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .email-table td {
             padding: 8px;
-            width: 80%;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .name-col {
+            width: 40%;  /* 加宽NAME列 */
+        }
+        .value-col {
+            width: 60%;  /* 缩窄VALUE列 */
         }
     </style>
+    <!-- 预加载Elephant字体 -->
+    <link href="https://fonts.cdnfonts.com/css/elephant" rel="stylesheet">
 </head>
 <body>
-    <div class="porite">porite</div>
     <div class="container">
-        <h3>文件接收确认</h3>
-        <p id="fileInfo"></p>
+        <h2>文件接收确认</h2>
+        <p id="fileInfo" style="font-size: 18px; margin-bottom: 20px;"></p>
+        
         <input type="text" id="userInput" placeholder="请输入您的姓名" required>
+        
         <button id="submitBtn" onclick="sendEmailNotification()">确认接收</button>
-        <p id="resultMsg"></p>
+        <p id="resultMsg" style="min-height: 50px;"></p>
+        
+        <!-- 右下角logo -->
+        <div class="porite-logo">porite</div>
     </div>
 
     <script>
@@ -55,20 +100,33 @@
             btn.disabled = true;
             btn.textContent = "发送中...";
             
-            const timestamp = new Date().toLocaleString('zh-CN');
+            const timestamp = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            // 邮件HTML内容（表格居中显示）
+            const emailContent = `
+                <table class="email-table">
+                    <tr><td class="name-col">文件编号</td><td class="value-col">${fileId}</td></tr>
+                    <tr><td>接收人员</td><td>${userName}</td></tr>
+                    <tr><td>接收时间</td><td>${timestamp}</td></tr>
+                </table>
+            `;
+
             const emailData = {
-                _template: "table",  // 使用表格模板
+                _template: "table",
                 _subject: `【文件接收】${fileId}`,
-                _replyto: userName + "@porite.com.cn", // 可选回复地址
-                文件编号: fileId,
-                接收人员: userName,
-                接收时间: timestamp,
-                设备信息: navigator.userAgent,
-                _cc: "lium@porite.com.cn"  // 主送您的邮箱
+                _replyto: "noreply@porite.com.cn",
+                _cc: "lium@porite.com.cn",
+                message: emailContent
             };
 
             try {
-                // 使用FormSubmit.co服务
                 const response = await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
                     headers: { 
@@ -82,7 +140,7 @@
                 
                 if (response.ok && result.success === "true") {
                     document.getElementById("resultMsg").innerHTML = `
-                        <span style="color:green">✅ 接收确认已发送至 lium@porite.com.cn</span><br>
+                        <span style="color:green">✅ 接收确认已发送</span><br>
                         <small>${timestamp}</small>
                     `;
                 } else {
@@ -90,13 +148,17 @@
                 }
             } catch (error) {
                 document.getElementById("resultMsg").innerHTML = `
-                    <span style="color:red">❌ 发送失败</span><br>
-                    <small>${error.message || '请直接联系 lium@porite.com.cn'}</small>
+                    <span style="color:red">❌ 提交失败</span><br>
+                    <small>${error.message || '请直接联系管理员'}</small>
                 `;
+            } finally {
                 btn.disabled = false;
-                btn.textContent = "重新发送";
+                btn.textContent = "确认接收";
             }
         }
     </script>
+
+    <!-- 强制预加载字体 -->
+    <div style="font-family: 'Elephant'; opacity: 0; position: absolute;">.</div>
 </body>
 </html>
