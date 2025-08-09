@@ -8,15 +8,15 @@
         body {
             font-family: "Times New Roman", sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             background-color: #f5f5f5;
             position: relative;
             min-height: 100vh;
         }
         .container {
-            max-width: 600px;
+            max-width: 680px;
             margin: 0 auto;
-            padding: 25px;
+            padding: 20px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -24,40 +24,51 @@
         .file-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 15px 0;
             font-size: 16px;
+            table-layout: fixed;
         }
         .file-table th, .file-table td {
             border: 1px solid #ddd;
-            padding: 12px;
+            padding: 8px 5px;
             text-align: left;
+            word-wrap: break-word;
         }
         .file-table th {
             background-color: #f2f2f2;
             font-weight: bold;
+            white-space: nowrap;
+        }
+        .file-table th:nth-child(1),
+        .file-table td:nth-child(1) {
+            width: 45%;
+        }
+        .file-table th:nth-child(2),
+        .file-table td:nth-child(2) {
+            width: 35%;
+        }
+        .file-table th:nth-child(3),
+        .file-table td:nth-child(3) {
+            width: 20%;
         }
         input {
-            padding: 12px;
-            width: 90%;
-            margin: 15px 0;
+            padding: 10px;
+            width: 50%;
+            margin: 10px auto;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
         }
         button {
-            padding: 12px 30px;
+            padding: 10px 25px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
-            margin-top: 20px;
+            margin: 15px auto;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -66,16 +77,17 @@
             cursor: not-allowed;
         }
         #resultMsg {
-            min-height: 50px;
+            min-height: 40px;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
+            font-size: 14px;
         }
         .fixed-porite {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 15px;
+            right: 15px;
             font-family: "Times New Roman", Times, serif;
-            font-size: 24px;
+            font-size: 22px;
             color: red;
             font-weight: bold;
             z-index: 1000;
@@ -84,7 +96,7 @@
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align:center;">【文件接收】</h2>
+        <h2 style="text-align:center;margin-bottom:15px;">【文件接收】</h2>
         
         <table class="file-table">
             <thead>
@@ -98,12 +110,12 @@
                 <tr>
                     <td id="filename-cell">加载中...</td>
                     <td id="receiver-cell">????</td>
-                    <td id="time-cell">2025/8/9 11:38</td>
+                    <td id="time-cell">待确认</td>
                 </tr>
             </tbody>
         </table>
         
-        <input type="text" id="userInput" placeholder="请输入您的姓名" required>
+        <input type="text" id="userInput" placeholder="请输入姓名" required>
         
         <button id="submitBtn">确认接收</button>
         <p id="resultMsg"></p>
@@ -117,18 +129,25 @@
         const fileId = urlParams.get('file') || '未指定文件';
         document.getElementById("filename-cell").textContent = fileId;
 
-        // 检查本地存储判断是否已提交
+        // 初始化状态
         const submitBtn = document.getElementById("submitBtn");
-        if(localStorage.getItem('formSubmitted') === 'true') {
-            disableSubmitButton();
-            document.getElementById("resultMsg").innerHTML = 
-                '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>';
+        const resultMsg = document.getElementById("resultMsg");
+        
+        // 仅当有存储的提交数据时才显示"已发送"状态
+        if(localStorage.getItem('formData')) {
+            const storedData = JSON.parse(localStorage.getItem('formData'));
+            if(storedData && storedData.userName) {
+                document.getElementById("receiver-cell").textContent = storedData.userName;
+                document.getElementById("time-cell").textContent = storedData.timestamp;
+                submitBtn.disabled = true;
+                submitBtn.textContent = "已发送";
+                submitBtn.style.backgroundColor = "#cccccc";
+                resultMsg.innerHTML = '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>';
+            }
         }
 
         // 提交处理
         submitBtn.addEventListener('click', async function() {
-            if(localStorage.getItem('formSubmitted') === 'true') return;
-            
             const userName = document.getElementById("userInput").value.trim();
             const fileName = document.getElementById("filename-cell").textContent;
             
@@ -137,9 +156,7 @@
                 return;
             }
             
-            disableSubmitButton();
-            localStorage.setItem('formSubmitted', 'true');
-            
+            // 先更新界面显示
             const timestamp = new Date().toLocaleString('zh-CN', {
                 year: 'numeric',
                 month: 'numeric',
@@ -147,13 +164,16 @@
                 hour: '2-digit',
                 minute: '2-digit'
             }).replace(/\//g, '/');
-
-            // 更新表格中的接受人员和接受时间
+            
             document.getElementById("receiver-cell").textContent = userName;
             document.getElementById("time-cell").textContent = timestamp;
-
+            
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = "发送中...";
+            
             try {
-                // 邮件正文（使用HTML格式确保样式）
+                // 邮件正文
                 const emailContent = `
 文件接收确认详情：
 ─────────────────────────────────────
@@ -173,7 +193,7 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        _template: "html", // 使用HTML模板
+                        _template: "html",
                         _subject: `【文件接收】 - ${fileName}_${userName}`,
                         _replyto: "lium@porite.com.cn",
                         _cc: "lium@porite.com.cn",
@@ -181,44 +201,25 @@
                     })
                 });
                 
-                const result = await response.json();
+                // 存储数据
+                localStorage.setItem('formData', JSON.stringify({
+                    userName: userName,
+                    timestamp: timestamp
+                }));
                 
-                document.getElementById("resultMsg").innerHTML = response.ok ? 
-                    '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>' : 
-                    '<span style="color:red;font-weight:bold;">❌ 提交失败，请截图联系管理员</span>';
+                // 更新按钮状态
+                submitBtn.textContent = "已发送";
+                resultMsg.innerHTML = '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>';
                 
             } catch (error) {
-                document.getElementById("resultMsg").innerHTML = 
-                    '<span style="color:red;font-weight:bold;">❌ 网络错误，请检查连接</span>';
-                resetSubmitButton();
+                resultMsg.innerHTML = '<span style="color:red;font-weight:bold;">❌ 网络错误，请检查连接</span>';
+                submitBtn.disabled = false;
+                submitBtn.textContent = "确认接收";
+                submitBtn.style.backgroundColor = "#4CAF50";
+                document.getElementById("receiver-cell").textContent = "????";
+                document.getElementById("time-cell").textContent = "待确认";
             }
         });
-
-        // 禁用提交按钮函数
-        function disableSubmitButton() {
-            submitBtn.disabled = true;
-            submitBtn.textContent = "已发送";
-            submitBtn.style.backgroundColor = "#999999";
-        }
-
-        // 重置提交按钮
-        function resetSubmitButton() {
-            localStorage.removeItem('formSubmitted');
-            submitBtn.disabled = false;
-            submitBtn.textContent = "确认接收";
-            submitBtn.style.backgroundColor = "#4CAF50";
-        }
-
-        // 初始化时间显示
-        document.getElementById("time-cell").textContent = 
-            new Date().toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).replace(/\//g, '/');
     </script>
 </body>
 </html>
-
