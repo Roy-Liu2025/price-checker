@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【文件确认】</title>
+    <title>【文件接收】</title>
     <style>
         body {
             font-family: "Times New Roman", sans-serif;
@@ -84,7 +84,7 @@
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align:center;">【文件确认】</h2>
+        <h2 style="text-align:center;">【文件接收】</h2>
         
         <table class="file-table">
             <thead>
@@ -109,7 +109,6 @@
         <p id="resultMsg"></p>
     </div>
 
-    <!-- 只在右下角显示一个LOGO -->
     <div class="fixed-porite">porite</div>
 
     <script>
@@ -172,7 +171,7 @@
                     },
                     body: JSON.stringify({
                         _template: "basic",
-                        _subject: `【文件确认】 - ${fileName}`-${userName},
+                        _subject: `【文件接收】 - ${fileName}_${userName}`,  // 在主题中添加接受人员
                         _replyto: "lium@porite.com.cn",
                         _cc: "lium@porite.com.cn",
                         message: emailContent
@@ -214,5 +213,3 @@
     </script>
 </body>
 </html>
-
-
