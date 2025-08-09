@@ -29,12 +29,26 @@
         }
         .file-table th, .file-table td {
             border: 1px solid #ddd;
-            padding: 12px;
+            padding: 10px 8px; /* 减少单元格内边距 */
             text-align: left;
         }
         .file-table th {
             background-color: #f2f2f2;
             font-weight: bold;
+        }
+        /* 调整列宽 */
+        .file-table th:nth-child(1),
+        .file-table td:nth-child(1) {
+            width: 40%; /* 文件列宽度减少 */
+        }
+        .file-table th:nth-child(2),
+        .file-table td:nth-child(2) {
+            width: 30%; /* 人员列宽度增加 */
+        }
+        .file-table th:nth-child(3),
+        .file-table td:nth-child(3) {
+            width: 30%; /* 时间列宽度不变 */
+            padding: 10px 5px; /* 两端留白减少 */
         }
         input {
             padding: 12px;
@@ -49,7 +63,7 @@
         }
         button {
             padding: 12px 30px;
-            background: #4CAF50;
+            background: #4CAF50; /* 初始绿色 */
             color: white;
             border: none;
             border-radius: 6px;
@@ -62,7 +76,7 @@
             transition: all 0.3s;
         }
         button:disabled {
-            background: #cccccc;
+            background: #cccccc; /* 禁用后灰色 */
             cursor: not-allowed;
         }
         #resultMsg {
@@ -125,19 +139,22 @@
         const submitBtn = document.getElementById("submitBtn");
         const resultMsg = document.getElementById("resultMsg");
         
-        // 从URL中检查是否已提交
-        if(urlParams.has('submitted')) {
+        // 仅当已提交时才禁用按钮
+        if(urlParams.has('submitted') || localStorage.getItem('formSubmitted') === 'true') {
             showSuccessMessage();
             disableSubmitButton();
-        } else if(localStorage.getItem('formSubmitted') === 'true') {
-            showSuccessMessage();
-            disableSubmitButton();
+            // 恢复已提交的数据
+            const storedData = JSON.parse(localStorage.getItem('formData') || '{}';
+            if(storedData.userName) {
+                document.getElementById("receiver-cell").textContent = storedData.userName;
+            }
+            if(storedData.timestamp) {
+                document.getElementById("time-cell").textContent = storedData.timestamp;
+            }
         }
 
         // 提交处理
         submitBtn.addEventListener('click', async function() {
-            if(localStorage.getItem('formSubmitted') === 'true') return;
-            
             const userName = document.getElementById("userInput").value.trim();
             const fileName = document.getElementById("filename-cell").textContent;
             
@@ -148,7 +165,7 @@
             
             disableSubmitButton();
             localStorage.setItem('formSubmitted', 'true');
-            
+            // 存储提交数据
             const timestamp = new Date().toLocaleString('zh-CN', {
                 year: 'numeric',
                 month: 'numeric',
@@ -156,7 +173,11 @@
                 hour: '2-digit',
                 minute: '2-digit'
             }).replace(/\//g, '/');
-
+            localStorage.setItem('formData', JSON.stringify({
+                userName: userName,
+                timestamp: timestamp
+            }));
+            
             // 更新表格中的接受人员和接受时间
             document.getElementById("receiver-cell").textContent = userName;
             document.getElementById("time-cell").textContent = timestamp;
@@ -210,14 +231,6 @@ ${separator}
         // 显示成功消息
         function showSuccessMessage() {
             resultMsg.innerHTML = '<span class="success-msg">✅ 接收确认已发送</span>';
-            // 更新表格中的接受人员和接受时间（从localStorage恢复）
-            const storedData = JSON.parse(localStorage.getItem('formData') || {};
-            if(storedData.userName) {
-                document.getElementById("receiver-cell").textContent = storedData.userName;
-            }
-            if(storedData.timestamp) {
-                document.getElementById("time-cell").textContent = storedData.timestamp;
-            }
         }
 
         // 显示错误消息
@@ -235,6 +248,7 @@ ${separator}
         // 重置提交按钮
         function resetSubmitButton() {
             localStorage.removeItem('formSubmitted');
+            localStorage.removeItem('formData');
             submitBtn.disabled = false;
             submitBtn.textContent = "确认接收";
             submitBtn.style.backgroundColor = "#4CAF50";
@@ -252,6 +266,3 @@ ${separator}
     </script>
 </body>
 </html>
-
-
-
