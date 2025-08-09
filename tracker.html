@@ -22,6 +22,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
         .title {
             font-size: 20px;
@@ -69,6 +70,15 @@
             text-align: center;
             font-weight: bold;
         }
+        .fixed-porite {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: red;
+            font-family: "Times New Roman";
+            font-size: 24px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -97,6 +107,9 @@
         <button id="submitBtn" class="submit-btn">确认接收</button>
         <div id="resultMsg" class="result-msg"></div>
     </div>
+
+    <!-- 固定显示的porite -->
+    <div class="fixed-porite">porite</div>
 
     <script>
         // 从URL获取文件标识
@@ -136,32 +149,16 @@
             submitBtn.textContent = "发送中...";
             
             try {
-                // 邮件HTML内容（严格按格式要求）
-                const emailHTMLContent = `
-<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-    <h3 style="margin-bottom: 10px;">文件接收确认详情：</h3>
-    <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;">
-    <p style="margin: 8px 0;"><strong>文件名称：</strong>${fileName}</p>
-    <p style="margin: 8px 0;"><strong>接受人员：</strong>${userName}</p>
-    <p style="margin: 8px 0;"><strong>接受时间：</strong>${timestamp}</p>
-    <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0;">
-    <p style="text-align: right; color: red; font-family: 'Times New Roman'; font-size: 24px; font-weight: bold; margin: 0;">
-        porite
-    </p>
-</div>
-                `.trim();
-
-                // 纯文本内容（兼容备用）
-                const emailTextContent = `
+                // 纯文本邮件内容（已移除porite）
+                const emailContent = `
 文件接收确认详情：
 ────────────────────────
 文件名称：${fileName}
 接受人员：${userName}
 接受时间：${timestamp}
 ────────────────────────
-                `.trim() + "\n" + " ".repeat(30) + "porite";
+                `.trim();
 
-                // 发送邮件
                 await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
                     headers: { 
@@ -169,10 +166,8 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        _template: "html",
                         _subject: `【文件接收】${fileName} - ${userName}`,
-                        message: emailHTMLContent,
-                        text: emailTextContent
+                        message: emailContent
                     })
                 });
 
