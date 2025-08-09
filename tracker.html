@@ -2,53 +2,60 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>【文件接收】</title>
     <style>
         body {
             font-family: "Times New Roman", sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 10px;
             background-color: #f5f5f5;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
         .container {
-            width: 90%;
+            width: 100%;
             max-width: 500px;
-            padding: 20px;
+            padding: 15px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            margin-top: -5vh;
         }
         .header {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 15px;
         }
         .porite-logo {
+            position: absolute;
+            left: 15px;
             color: red;
             font-family: "Times New Roman";
             font-size: 24px;
             font-weight: bold;
-            margin-right: 10px;
         }
         .title {
             font-size: 20px;
             font-weight: bold;
             color: #333;
+            text-align: center;
         }
         .file-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         .file-table th, .file-table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: center; /* 表格内容居中 */
+            text-align: center;
         }
         .file-table th {
             background-color: #f2f2f2;
@@ -57,23 +64,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 25px 0;
+            margin: 15px 0 10px;
+            gap: 15px; /* 新增：输入框和按钮之间的间距 */
         }
         .input-group {
-            flex: 1;
-            max-width: 120px; /* 大约可输入4-5个字 */
-            margin-right: 10px;
+            flex: 0 0 80px;
         }
         .input-group input {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
             text-align: center;
         }
         .submit-btn {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -87,9 +93,10 @@
             cursor: not-allowed;
         }
         .result-msg {
-            margin: 15px 0;
+            margin: 10px 0 5px;
             text-align: center;
             font-weight: bold;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -126,17 +133,22 @@
     </div>
 
     <script>
-        // 从URL获取文件标识
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('userInput');
+            input.addEventListener('focus', function() {
+                window.scrollTo(0, 0);
+                document.body.scrollTop = 0;
+            });
+        });
+
         const urlParams = new URLSearchParams(window.location.search);
         const fileId = urlParams.get('file') || '未指定文件';
         document.getElementById("filename-cell").textContent = fileId;
 
-        // 初始化状态
         const submitBtn = document.getElementById("submitBtn");
         const resultMsg = document.getElementById("resultMsg");
         const userInput = document.getElementById("userInput");
         
-        // 提交处理
         submitBtn.addEventListener('click', async function() {
             const userName = userInput.value.trim();
             const fileName = document.getElementById("filename-cell").textContent;
@@ -146,7 +158,6 @@
                 return;
             }
             
-            // 更新时间显示格式
             const timestamp = new Date().toLocaleString('zh-CN', {
                 year: 'numeric',
                 month: '2-digit',
@@ -156,14 +167,12 @@
                 hour12: false
             }).replace(/\//g, '-');
 
-            // 更新界面
             document.getElementById("receiver-cell").textContent = userName;
             document.getElementById("time-cell").textContent = timestamp;
             submitBtn.disabled = true;
             submitBtn.textContent = "发送中...";
             
             try {
-                // 纯文本邮件内容
                 const emailContent = `
 文件接收确认详情：
 ────────────────────────
@@ -185,12 +194,10 @@
                     })
                 });
 
-                // 成功反馈
                 submitBtn.textContent = "已发送";
                 resultMsg.innerHTML = '<span style="color:green;">✅ 接收确认已发送</span>';
 
             } catch (error) {
-                // 失败处理
                 resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请检查网络</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = "确认接收";
