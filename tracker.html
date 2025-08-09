@@ -3,22 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件交接确认</title>
+    <title>【文件接收】</title>
     <style>
         body {
             font-family: "Times New Roman", sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
+            position: relative;
+            min-height: 100vh;
         }
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 25px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
+        }
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .file-table th, .file-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .file-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
         }
         input {
             padding: 12px;
@@ -43,102 +59,110 @@
             margin-left: auto;
             margin-right: auto;
             cursor: pointer;
+            transition: all 0.3s;
         }
-        .porite-logo {
-            position: absolute;
-            bottom: 15px;
-            right: 20px;
-            font-family: "Times New Roman", sans-serif;
-            font-size: 24px;
-            color: red;
-            font-weight: bold;
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
         #resultMsg {
             min-height: 50px;
             text-align: center;
             margin-top: 20px;
         }
+        .fixed-porite {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 24px;
+            color: red;
+            font-weight: bold;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align:center;">文件接收确认</h2>
-        <p id="fileInfo" style="text-align:center;"></p>
+        <h2 style="text-align:center;">【文件接收】</h2>
+        
+        <table class="file-table">
+            <thead>
+                <tr>
+                    <th>文件名称</th>
+                    <th>接受人员</th>
+                    <th>接受时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="filename-cell">加载中...</td>
+                    <td id="receiver-cell">????</td>
+                    <td id="time-cell">2025/8/9 11:38</td>
+                </tr>
+            </tbody>
+        </table>
         
         <input type="text" id="userInput" placeholder="请输入您的姓名" required>
         
         <button id="submitBtn">确认接收</button>
         <p id="resultMsg"></p>
-        
-        <div class="porite-logo">porite</div>
     </div>
+
+    <div class="fixed-porite">porite</div>
 
     <script>
         // 从URL获取文件标识
         const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('file');
-        document.getElementById("fileInfo").textContent = `文件编号：${fileId}`;
+        const fileId = urlParams.get('file') || '未指定文件';
+        document.getElementById("filename-cell").textContent = fileId;
 
-        // 邮件内容生成函数（VALUE列宽度2倍优化版）
-        function getEmailContent(fileId, userName, time) {
-            // 计算字符串显示宽度（中文算2个字符）
-            const getDisplayWidth = (str) => {
-                return str.split('').reduce((total, char) => {
-                    return total + (char.match(/[^\x00-\xff]/) ? 2 : 1);
-                }, 0);
-            };
-
-            // 生成固定宽度行
-            const formatLine = (name, value) => {
-                const nameWidth = 15;  // NAME列基础宽度
-                const valueWidth = 40; // VALUE列宽度（原20的2倍）
-                
-                // 对齐处理（考虑中文字符）
-                let namePadding = nameWidth - getDisplayWidth(name);
-                let valuePadding = valueWidth - getDisplayWidth(value);
-                
-                return name + ' '.repeat(Math.max(0, namePadding)) + 
-                       value + ' '.repeat(Math.max(0, valuePadding));
-            };
-
-            // 分隔线（长度与表格匹配）
-            const separator = '─'.repeat(55);
-            
-            return `
-文件接收确认详情：
-${separator}
-${formatLine('NAME', 'VALUE')}
-${separator}
-${formatLine('文件名称', fileId)}
-${formatLine('接受人员', userName)}
-${formatLine('接受时间', time)}
-${separator}
-            `.trim();
+        // 检查本地存储判断是否已提交
+        const submitBtn = document.getElementById("submitBtn");
+        if(localStorage.getItem('formSubmitted') === 'true') {
+            disableSubmitButton();
         }
 
         // 提交处理
-        document.getElementById("submitBtn").addEventListener('click', async () => {
-            const btn = document.getElementById("submitBtn");
+        submitBtn.addEventListener('click', async function() {
+            if(localStorage.getItem('formSubmitted') === 'true') return;
+            
             const userName = document.getElementById("userInput").value.trim();
+            const fileName = document.getElementById("filename-cell").textContent;
             
             if (!userName) {
                 alert("请输入您的姓名");
                 return;
             }
             
-            btn.disabled = true;
-            btn.textContent = "发送中...";
+            disableSubmitButton();
+            localStorage.setItem('formSubmitted', 'true');
             
             const timestamp = new Date().toLocaleString('zh-CN', {
                 year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
+                month: 'numeric',
+                day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
+                minute: '2-digit'
+            }).replace(/\//g, '/');
+
+            // 更新表格中的接受人员和接受时间
+            document.getElementById("receiver-cell").textContent = userName;
+            document.getElementById("time-cell").textContent = timestamp;
 
             try {
+                // 邮件正文添加右下角LOGO
+                const emailContent = `
+文件接收确认详情：
+─────────────────────────────────────
+文件名称：${fileName}
+接受人员：${userName}
+接受时间：${timestamp}
+─────────────────────────────────────
+
+<span style="float:right;color:red;font-family:'Times New Roman';font-size:16px;font-weight:bold;">porite</span>
+                `.trim();
+
                 const response = await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
                     headers: { 
@@ -147,10 +171,10 @@ ${separator}
                     },
                     body: JSON.stringify({
                         _template: "basic",
-                        _subject: "文件接收确认 - " + fileId,
+                        _subject: `【文件接收】 - ${fileName}_${userName}`,  // 在主题中添加接受人员
                         _replyto: "lium@porite.com.cn",
                         _cc: "lium@porite.com.cn",
-                        message: getEmailContent(fileId, userName, timestamp)
+                        message: emailContent
                     })
                 });
                 
@@ -159,24 +183,34 @@ ${separator}
                 document.getElementById("resultMsg").innerHTML = response.ok ? 
                     '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>' : 
                     '<span style="color:red;font-weight:bold;">❌ 提交失败，请截图联系管理员</span>';
+                
             } catch (error) {
                 document.getElementById("resultMsg").innerHTML = 
                     '<span style="color:red;font-weight:bold;">❌ 网络错误，请检查连接</span>';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "确认接收";
+                // 出错时恢复按钮状态
+                localStorage.removeItem('formSubmitted');
+                submitBtn.disabled = false;
+                submitBtn.textContent = "确认接收";
             }
         });
 
-        // 测试输出（开发时验证格式）
-        console.log(getEmailContent(
-            "250808_22888809-1_量产资料", 
-            "张三", 
-            "2025/08/09 10:05:23"
-        ));
+        // 禁用提交按钮函数
+        function disableSubmitButton() {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "已确认";
+            submitBtn.style.backgroundColor = "#999999";
+        }
+
+        // 初始化时间显示
+        document.getElementById("time-cell").textContent = 
+            new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(/\//g, '/');
     </script>
 </body>
 </html>
-
-
 
