@@ -8,15 +8,15 @@
         body {
             font-family: "Times New Roman", sans-serif;
             margin: 0;
-            padding: 10px;
+            padding: 5px; /* 最小化页面留白 */
             background-color: #f5f5f5;
             position: relative;
             min-height: 100vh;
         }
         .container {
-            max-width: 680px;
+            max-width: 98%; /* 最大化容器宽度 */
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px; /* 减少内边距 */
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -30,7 +30,7 @@
         }
         .file-table th, .file-table td {
             border: 1px solid #ddd;
-            padding: 8px 5px;
+            padding: 8px 4px; /* 最小化单元格内边距 */
             text-align: left;
             word-wrap: break-word;
         }
@@ -38,27 +38,33 @@
             background-color: #f2f2f2;
             font-weight: bold;
             white-space: nowrap;
+            font-size: 15px; /* 稍微减小字体 */
         }
+        /* 优化列宽 */
         .file-table th:nth-child(1),
         .file-table td:nth-child(1) {
-            width: 45%;
+            width: 50%; /* 文件列 */
         }
         .file-table th:nth-child(2),
         .file-table td:nth-child(2) {
-            width: 35%;
+            width: 30%; /* 人员列 */
+            white-space: nowrap; /* 强制不换行 */
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超出显示省略号 */
         }
         .file-table th:nth-child(3),
         .file-table td:nth-child(3) {
-            width: 20%;
+            width: 20%; /* 时间列 */
         }
         input {
             padding: 10px;
-            width: 50%;
-            margin: 10px auto;
+            width: 50%; /* 宽度减半 */
+            margin: 10px auto; /* 居中 */
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
             display: block;
+            max-width: 250px; /* 限制最大宽度 */
         }
         button {
             padding: 10px 25px;
@@ -96,7 +102,7 @@
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align:center;margin-bottom:15px;">【文件接收】</h2>
+        <h2 style="text-align:center;margin-bottom:15px;font-size:18px;">【文件接收】</h2>
         
         <table class="file-table">
             <thead>
@@ -115,7 +121,7 @@
             </tbody>
         </table>
         
-        <input type="text" id="userInput" placeholder="请输入姓名" required>
+        <input type="text" id="userInput" placeholder="输入姓名" required>
         
         <button id="submitBtn">确认接收</button>
         <p id="resultMsg"></p>
@@ -133,17 +139,30 @@
         const submitBtn = document.getElementById("submitBtn");
         const resultMsg = document.getElementById("resultMsg");
         
-        // 仅当有存储的提交数据时才显示"已发送"状态
-        if(localStorage.getItem('formData')) {
-            const storedData = JSON.parse(localStorage.getItem('formData'));
-            if(storedData && storedData.userName) {
-                document.getElementById("receiver-cell").textContent = storedData.userName;
-                document.getElementById("time-cell").textContent = storedData.timestamp;
+        // 检查是否已有提交记录
+        const checkSubmission = () => {
+            const submissionKey = `formSubmitted_${fileId}`;
+            const storedData = localStorage.getItem(submissionKey);
+            
+            if(storedData) {
+                const {userName, timestamp} = JSON.parse(storedData);
+                document.getElementById("receiver-cell").textContent = userName;
+                document.getElementById("time-cell").textContent = timestamp;
                 submitBtn.disabled = true;
                 submitBtn.textContent = "已发送";
-                submitBtn.style.backgroundColor = "#cccccc";
                 resultMsg.innerHTML = '<span style="color:green;font-weight:bold;">✅ 接收确认已发送</span>';
+                return true;
             }
+            return false;
+        };
+        
+        // 初始检查
+        if(!checkSubmission()) {
+            document.getElementById("receiver-cell").textContent = "????";
+            document.getElementById("time-cell").textContent = "待确认";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "确认接收";
+            resultMsg.innerHTML = "";
         }
 
         // 提交处理
@@ -201,8 +220,9 @@
                     })
                 });
                 
-                // 存储数据
-                localStorage.setItem('formData', JSON.stringify({
+                // 存储数据（按文件ID区分）
+                const submissionKey = `formSubmitted_${fileId}`;
+                localStorage.setItem(submissionKey, JSON.stringify({
                     userName: userName,
                     timestamp: timestamp
                 }));
@@ -215,7 +235,6 @@
                 resultMsg.innerHTML = '<span style="color:red;font-weight:bold;">❌ 网络错误，请检查连接</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = "确认接收";
-                submitBtn.style.backgroundColor = "#4CAF50";
                 document.getElementById("receiver-cell").textContent = "????";
                 document.getElementById("time-cell").textContent = "待确认";
             }
