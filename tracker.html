@@ -22,22 +22,22 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .porite-logo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
             color: red;
             font-family: "Times New Roman";
             font-size: 24px;
             font-weight: bold;
+            margin-right: 10px;
         }
         .title {
             font-size: 20px;
             font-weight: bold;
-            text-align: center;
-            margin: 15px 0 25px;
             color: #333;
         }
         .file-table {
@@ -48,17 +48,24 @@
         .file-table th, .file-table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: left;
+            text-align: center; /* 表格内容居中 */
         }
         .file-table th {
             background-color: #f2f2f2;
         }
-        .input-group {
+        .input-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin: 25px 0;
-            text-align: center;
+        }
+        .input-group {
+            flex: 1;
+            max-width: 120px; /* 大约可输入4-5个字 */
+            margin-right: 10px;
         }
         .input-group input {
-            width: 50%;
+            width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -66,16 +73,14 @@
             text-align: center;
         }
         .submit-btn {
-            width: 50%;
-            padding: 12px;
-            margin: 0 auto;
-            display: block;
+            padding: 10px 15px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
+            white-space: nowrap;
         }
         .submit-btn:disabled {
             background-color: #cccccc;
@@ -90,10 +95,10 @@
 </head>
 <body>
     <div class="container">
-        <!-- porite标志在左上角 -->
-        <div class="porite-logo">porite</div>
-
-        <div class="title">【文件接收】</div>
+        <div class="header">
+            <div class="porite-logo">porite</div>
+            <div class="title">【文件接收】</div>
+        </div>
 
         <table class="file-table">
             <tr>
@@ -110,11 +115,13 @@
             </tr>
         </table>
 
-        <div class="input-group">
-            <input type="text" id="userInput" placeholder="输入姓名">
+        <div class="input-row">
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="姓名">
+            </div>
+            <button id="submitBtn" class="submit-btn">确认接收</button>
         </div>
 
-        <button id="submitBtn" class="submit-btn">确认接收</button>
         <div id="resultMsg" class="result-msg"></div>
     </div>
 
