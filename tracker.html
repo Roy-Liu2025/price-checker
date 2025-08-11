@@ -1,211 +1,131 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>【文件接收】</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生产追踪系统</title>
     <style>
         body {
-            font-family: "Times New Roman", sans-serif;
-            margin: 0;
-            padding: 10px;
-            background-color: #f5f5f5;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
-            margin-top: -5vh;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+        .form-group {
             margin-bottom: 15px;
         }
-        .porite-logo {
-            position: absolute;
-            left: 15px;
-            color: red;
-            font-family: "Times New Roman";
-            font-size: 24px;
+        label {
+            display: inline-block;
+            width: 120px;
             font-weight: bold;
         }
-        .title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            text-align: center;
-        }
-        .file-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        .file-table th, .file-table td {
-            border: 1px solid #ddd;
+        select, input {
             padding: 8px;
-            text-align: center;
-        }
-        .file-table th {
-            background-color: #f2f2f2;
-        }
-        .input-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 15px 0 10px;
-            gap: 30px; /* 新增：输入框和按钮之间的间距 */
-        }
-        .input-group {
-            flex: 0 0 80px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 8px;
+            width: 250px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 16px;
-            text-align: center;
         }
-        .submit-btn {
-            padding: 8px 12px;
+        button {
+            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 16px;
             cursor: pointer;
-            white-space: nowrap;
         }
-        .submit-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        button:hover {
+            background-color: #45a049;
         }
-        .result-msg {
-            margin: 10px 0 5px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
+        .file-info {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="porite-logo">porite</div>
-            <div class="title">【文件接收】</div>
-        </div>
-
-        <table class="file-table">
-            <tr>
-                <th>文件名称</th>
-                <td id="filename-cell">未指定文件</td>
-            </tr>
-            <tr>
-                <th>接受人员</th>
-                <td id="receiver-cell">????</td>
-            </tr>
-            <tr>
-                <th>接受时间</th>
-                <td id="time-cell">待确认</td>
-            </tr>
-        </table>
-
-        <div class="input-row">
-            <div class="input-group">
-                <input type="text" id="userInput" placeholder="姓名">
-            </div>
-            <button id="submitBtn" class="submit-btn">确认接收</button>
-        </div>
-
-        <div id="resultMsg" class="result-msg"></div>
+    <h1>生产追踪系统</h1>
+    
+    <div class="file-info">
+        <h3>文件信息</h3>
+        <p id="filename"></p>
     </div>
+    
+    <form id="trackerForm">
+        <div class="form-group">
+            <label for="personnel1">负责人 1：</label>
+            <select id="personnel1" name="personnel1" required>
+                <option value="">-- 请选择 --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="personnel2">负责人 2：</label>
+            <select id="personnel2" name="personnel2">
+                <option value="">-- 请选择 --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="notes">备注：</label>
+            <input type="text" id="notes" name="notes">
+        </div>
+        
+        <button type="submit">提交</button>
+    </form>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('userInput');
-            input.addEventListener('focus', function() {
-                window.scrollTo(0, 0);
-                document.body.scrollTop = 0;
+        // 解析URL参数
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                file: decodeURIComponent(params.get('file') || ''),
+                personnel: (params.get('personnel') || '').split(','),
+                personnel2: (params.get('personnel2') || '').split(',')
+            };
+        }
+
+        // 初始化页面
+        function initPage() {
+            const { file, personnel, personnel2 } = parseUrlParams();
+            
+            // 显示文件信息
+            document.getElementById('filename').textContent = file || '无文件信息';
+            
+            // 填充人员下拉框
+            fillDropdown('personnel1', personnel);
+            fillDropdown('personnel2', personnel2);
+            
+            // 表单提交处理
+            document.getElementById('trackerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = {
+                    personnel1: document.getElementById('personnel1').value,
+                    personnel2: document.getElementById('personnel2').value,
+                    notes: document.getElementById('notes').value,
+                    fileInfo: file
+                };
+                alert('提交成功:\n' + JSON.stringify(formData, null, 2));
+                // 这里可以添加AJAX提交逻辑
             });
-        });
+        }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('file') || '未指定文件';
-        document.getElementById("filename-cell").textContent = fileId;
+        // 填充下拉框
+        function fillDropdown(elementId, items) {
+            const dropdown = document.getElementById(elementId);
+            items.forEach(item => {
+                if (item.trim()) {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    dropdown.appendChild(option);
+                }
+            });
+        }
 
-        const submitBtn = document.getElementById("submitBtn");
-        const resultMsg = document.getElementById("resultMsg");
-        const userInput = document.getElementById("userInput");
-        
-        submitBtn.addEventListener('click', async function() {
-            const userName = userInput.value.trim();
-            const fileName = document.getElementById("filename-cell").textContent;
-            
-            if (!userName) {
-                alert("请输入您的姓名");
-                return;
-            }
-            
-            const timestamp = new Date().toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            }).replace(/\//g, '-');
-
-            document.getElementById("receiver-cell").textContent = userName;
-            document.getElementById("time-cell").textContent = timestamp;
-            submitBtn.disabled = true;
-            submitBtn.textContent = "发送中...";
-            
-            try {
-                const emailContent = `
-文件接收确认详情：
-────────────────────────
-文件名称：${fileName}
-接受人员：${userName}
-接受时间：${timestamp}
-────────────────────────
-                `.trim();
-
-                await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
-                    method: "POST",
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        _subject: `【文件接收】${fileName} - ${userName}`,
-                        message: emailContent
-                    })
-                });
-
-                submitBtn.textContent = "已发送";
-                resultMsg.innerHTML = '<span style="color:green;">✅ 接收确认已发送</span>';
-
-            } catch (error) {
-                resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请检查网络</span>';
-                submitBtn.disabled = false;
-                submitBtn.textContent = "确认接收";
-                document.getElementById("receiver-cell").textContent = "????";
-                document.getElementById("time-cell").textContent = "待确认";
-            }
-        });
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>
 </html>
