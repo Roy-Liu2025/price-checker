@@ -16,63 +16,68 @@
         }
         .container {
             border: 2px solid #FF0000;
-            padding: 20px;
+            padding: 25px;
             border-radius: 5px;
             background-color: white;
-            width: 380px;
+            width: 420px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .logo {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #FF0000;
             text-transform: lowercase;
+            width: 70px;
         }
         h2 {
             color: #000000;
-            font-size: 20px;
+            font-size: 22px;
             margin: 0;
             text-align: center;
             flex-grow: 1;
         }
         .file-display {
             font-weight: bold;
-            margin-bottom: 15px;
-            padding: 8px;
+            margin: 0 auto 20px;
+            padding: 10px;
             background-color: #f5f5f5;
-            border-radius: 3px;
-            font-size: 14px;
+            border-radius: 5px;
+            font-size: 15px;
             color: #000000;
+            text-align: center;
+            width: 90%;
         }
         .personnel-container {
             display: flex;
+            justify-content: center;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            gap: 8px;
         }
         .personnel-label {
             color: #0000FF;
             font-weight: bold;
-            margin-right: 5px;
-            width: 50px;
+            width: 52px;
+            text-align: right;
         }
         select {
-            padding: 6px 8px;
+            padding: 7px 10px;
             border: 1px solid #ddd;
-            border-radius: 3px;
+            border-radius: 4px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 14px;
-            width: 100px;
+            width: 110px;
             color: #0000FF;
         }
         .arrow {
-            margin: 0 5px;
-            font-size: 16px;
+            margin: 0 4px;
+            font-size: 18px;
             font-weight: bold;
             color: #FF0000;
         }
@@ -80,22 +85,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: 20px;
         }
         .time-display {
             color: #000000;
             font-size: 14px;
-            width: 220px;
+            width: 240px;
+            padding-left: 5px;
         }
         button {
-            padding: 6px 15px;
+            padding: 8px 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Times New Roman', Times, serif;
-            font-size: 14px;
-            min-width: 80px;
+            font-size: 15px;
+            min-width: 90px;
+            height: 36px;
         }
         button:hover {
             background-color: #45a049;
@@ -111,16 +119,16 @@
         <div class="header">
             <div class="logo">porite</div>
             <h2>文件交接</h2>
-            <div style="width: 60px;"></div>
+            <div style="width: 70px;"></div>
         </div>
         
         <div class="file-display" id="fileDisplay"></div>
         
         <div class="personnel-container">
-            <div class="personnel-label">本人:</div>
+            <div class="personnel-label">本人</div>
             <select id="sender"></select>
             <span class="arrow">→</span>
-            <div class="personnel-label">接收人:</div>
+            <div class="personnel-label">接收人</div>
             <select id="receiver"></select>
         </div>
         
@@ -141,7 +149,7 @@
         }
 
         // 获取企业微信用户真实姓名
-        function getWeComUserName() {
+        function getWeComUser() {
             return new Promise((resolve) => {
                 // 实际企业微信环境
                 if (window.__wxjs_environment === 'wxwork' || 
@@ -156,20 +164,19 @@
                                     userId: res.userId
                                 }, function(userRes) {
                                     if (userRes.err_msg === 'getUserInfo:ok') {
-                                        resolve(userRes.userInfo.name || '企业微信用户');
+                                        resolve(userRes.userInfo.name);
                                     } else {
-                                        resolve('企业微信用户');
+                                        resolve(null);
                                     }
                                 });
                             } else {
-                                resolve('企业微信用户');
+                                resolve(null);
                             }
                         });
                     } 
-                    // 测试环境使用模拟数据
+                    // 测试环境使用当前用户作为模拟
                     else {
-                        // 这里应该显示真实姓名，模拟为"当前用户"
-                        resolve('当前用户'); 
+                        resolve('当前用户');
                     }
                 } else {
                     resolve(null);
@@ -186,7 +193,7 @@
             setInterval(updateTimeDisplay, 1000);
             
             // 获取企业微信用户真实姓名
-            const weComUser = await getWeComUserName();
+            const weComUser = await getWeComUser();
             
             // 填充人员下拉框
             const personnel = params.personnel.filter(p => p.trim() !== '');
@@ -204,10 +211,10 @@
             
             // 设置企业微信用户为默认发送人
             if (weComUser) {
-                // 先检查是否已在选项中
+                // 检查是否已在选项中
                 let userExists = false;
                 for (let i = 0; i < senderSelect.options.length; i++) {
-                    if (senderSelect.options[i].value === weComUser) {
+                    if (senderSelect.options[i].text === weComUser) {
                         userExists = true;
                         break;
                     }
