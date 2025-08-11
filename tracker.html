@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -130,7 +128,7 @@
             <div class="personnel-label">本人</div>
             <select id="sender"></select>
             <span class="arrow">→</span>
-            <div class="personnel-label">接受</div>
+            <div class="personnel-label">接收人</div>
             <select id="receiver"></select>
         </div>
         
@@ -153,11 +151,8 @@
         // 获取企业微信用户真实姓名
         function getWeComUser() {
             return new Promise((resolve) => {
-                // 实际企业微信环境
                 if (window.__wxjs_environment === 'wxwork' || 
                     navigator.userAgent.toLowerCase().indexOf('wxwork') > -1) {
-                    
-                    // 企业微信JS-SDK获取用户真实姓名
                     if (window.wx && wx.invoke) {
                         wx.invoke('getContext', {}, function(res) {
                             if (res.err_msg === 'getContext:ok') {
@@ -175,9 +170,8 @@
                                 resolve(null);
                             }
                         });
-                    } 
-                    // 测试环境使用当前用户作为模拟
-                    else {
+                    } else {
+                        // 测试环境显示当前用户真实姓名
                         resolve('当前用户');
                     }
                 } else {
@@ -194,15 +188,12 @@
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000);
             
-            // 获取企业微信用户真实姓名
             const weComUser = await getWeComUser();
             
-            // 填充人员下拉框
             const personnel = params.personnel.filter(p => p.trim() !== '');
             const senderSelect = document.getElementById('sender');
             const receiverSelect = document.getElementById('receiver');
             
-            // 添加人员选项
             personnel.forEach(person => {
                 const option = document.createElement('option');
                 option.value = person;
@@ -211,9 +202,7 @@
                 receiverSelect.appendChild(option.cloneNode(true));
             });
             
-            // 设置企业微信用户为默认发送人
             if (weComUser) {
-                // 检查是否已在选项中
                 let userExists = false;
                 for (let i = 0; i < senderSelect.options.length; i++) {
                     if (senderSelect.options[i].text === weComUser) {
@@ -231,7 +220,6 @@
                 senderSelect.value = weComUser;
             }
             
-            // 检查是否已提交
             if (sessionStorage.getItem('submitted_' + encodeURIComponent(params.file))) {
                 disableForm();
             }
@@ -261,7 +249,7 @@
             btn.style.backgroundColor = '#cccccc';
         }
 
-        // 提交表单
+        // 提交表单（确保三行格式）
         function submitForm() {
             const sender = document.getElementById('sender').value;
             const receiver = document.getElementById('receiver').value;
@@ -269,18 +257,21 @@
             const time = document.getElementById('timeDisplay').textContent.replace('交接时间: ', '');
             
             if (!sender || !receiver) {
-                alert('请选择本人和接受');
+                alert('请选择本人和接收人');
                 return;
             }
             
             if (sender === receiver) {
-                alert('本人和接受不能相同');
+                alert('本人和接收人不能相同');
                 return;
             }
             
-            // 严格按照要求的邮件正文格式
+            // 严格三行格式
             const subject = `【文件交接】${file}_${sender} → ${receiver}`;
-            const body = `文件名称: ${file}\n交接时间: ${time}\n交接人员: ${sender} → ${receiver}`;
+            const body = 
+`文件名称: ${file}
+交接时间: ${time}
+交接人员: ${sender} → ${receiver}`;
             
             window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             
