@@ -1,131 +1,112 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>生产追踪系统</title>
+    <title>人员交接</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        body { font-family: Arial; padding: 20px; max-width: 500px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; align-items: center; margin-bottom: 10px; }
+        label { min-width: 80px; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 3px; }
+        button { 
+            padding: 8px 20px; 
+            background-color: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 3px; 
+            cursor: pointer; 
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: inline-block;
-            width: 120px;
-            font-weight: bold;
-        }
-        select, input {
-            padding: 8px;
-            width: 250px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .file-info {
-            background-color: #f5f5f5;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
+        button:hover { background-color: #45a049; }
+        .arrow { margin: 0 10px; font-size: 18px; }
+        .time-display { color: #666; font-size: 14px; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h1>生产追踪系统</h1>
+    <h2>人员交接</h2>
     
-    <div class="file-info">
-        <h3>文件信息</h3>
-        <p id="filename"></p>
+    <div class="form-group">
+        <label>文件:</label>
+        <div id="fileDisplay" style="font-weight:bold;"></div>
     </div>
     
-    <form id="trackerForm">
-        <div class="form-group">
-            <label for="personnel1">负责人 1：</label>
-            <select id="personnel1" name="personnel1" required>
-                <option value="">-- 请选择 --</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="personnel2">负责人 2：</label>
-            <select id="personnel2" name="personnel2">
-                <option value="">-- 请选择 --</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="notes">备注：</label>
-            <input type="text" id="notes" name="notes">
-        </div>
-        
-        <button type="submit">提交</button>
-    </form>
+    <div class="form-row">
+        <label for="sender">本人:</label>
+        <input type="text" id="sender" style="width:120px;">
+        <span class="arrow">→</span>
+        <label for="receiver">接收人:</label>
+        <input type="text" id="receiver" style="width:120px;">
+    </div>
+    
+    <div class="form-group">
+        <div class="time-display" id="timeDisplay"></div>
+    </div>
+    
+    <button onclick="submitForm()">提交</button>
 
     <script>
         // 解析URL参数
-        function parseUrlParams() {
+        function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
-                file: decodeURIComponent(params.get('file') || ''),
-                personnel: (params.get('personnel') || '').split(','),
-                personnel2: (params.get('personnel2') || '').split(',')
+                file: decodeURIComponent(params.get('file') || '未指定文件'),
+                personnel: (params.get('personnel') || '').split(',')
             };
         }
 
         // 初始化页面
-        function initPage() {
-            const { file, personnel, personnel2 } = parseUrlParams();
+        function init() {
+            const params = getUrlParams();
+            document.getElementById('fileDisplay').textContent = params.file;
             
-            // 显示文件信息
-            document.getElementById('filename').textContent = file || '无文件信息';
+            // 显示当前时间
+            updateTimeDisplay();
+            setInterval(updateTimeDisplay, 1000);
             
-            // 填充人员下拉框
-            fillDropdown('personnel1', personnel);
-            fillDropdown('personnel2', personnel2);
-            
-            // 表单提交处理
-            document.getElementById('trackerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = {
-                    personnel1: document.getElementById('personnel1').value,
-                    personnel2: document.getElementById('personnel2').value,
-                    notes: document.getElementById('notes').value,
-                    fileInfo: file
-                };
-                alert('提交成功:\n' + JSON.stringify(formData, null, 2));
-                // 这里可以添加AJAX提交逻辑
-            });
+            // 自动填充第一个人员作为默认发送人
+            if(params.personnel.length > 0) {
+                document.getElementById('sender').value = params.personnel[0];
+            }
         }
 
-        // 填充下拉框
-        function fillDropdown(elementId, items) {
-            const dropdown = document.getElementById(elementId);
-            items.forEach(item => {
-                if (item.trim()) {
-                    const option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item;
-                    dropdown.appendChild(option);
-                }
-            });
+        // 更新时间显示
+        function updateTimeDisplay() {
+            const now = new Date();
+            document.getElementById('timeDisplay').textContent = 
+                "提交时间: " + now.toLocaleString('zh-CN', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).replace(/\//g, '-');
+        }
+
+        // 提交表单
+        function submitForm() {
+            const sender = document.getElementById('sender').value.trim();
+            const receiver = document.getElementById('receiver').value.trim();
+            const file = getUrlParams().file;
+            const time = document.getElementById('timeDisplay').textContent.replace('提交时间: ', '');
+            
+            if(!sender || !receiver) {
+                alert('请填写本人和接收人信息');
+                return;
+            }
+            
+            // 构造邮件内容
+            const subject = `人员交接确认: ${file}`;
+            const body = `文件: ${file}\n时间: ${time}\n交接: ${sender} → ${receiver}`;
+            
+            // 发送邮件
+            window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
 
         // 页面加载时初始化
-        window.addEventListener('DOMContentLoaded', initPage);
+        window.onload = init;
     </script>
 </body>
 </html>
