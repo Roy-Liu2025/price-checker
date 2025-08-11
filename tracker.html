@@ -6,7 +6,7 @@
     <title>【文件接收】</title>
     <style>
         body {
-            font-family: "Times New Roman", sans-serif;
+            font-family: "Microsoft YaHei", "Times New Roman", sans-serif;
             margin: 0;
             padding: 10px;
             background-color: #f5f5f5;
@@ -55,29 +55,31 @@
         .file-table th, .file-table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: center;
+            text-align: left;
         }
         .file-table th {
             background-color: #f2f2f2;
+            width: 30%;
         }
-        .personnel-select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            min-width: 120px;
-            max-width: 150px;
-        }
-        .personnel-container {
+        .personnel-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
+            gap: 5px;
+            width: 100%;
+        }
+        .personnel-select {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 30%;
+            min-width: 80px;
+            font-family: "Microsoft YaHei", sans-serif;
         }
         .arrow {
-            font-size: 20px;
+            font-size: 16px;
             color: #666;
+            padding: 0 5px;
         }
         .submit-btn {
             padding: 8px 12px;
@@ -90,6 +92,7 @@
             white-space: nowrap;
             display: block;
             margin: 15px auto;
+            font-family: "Microsoft YaHei", sans-serif;
         }
         .submit-btn:disabled {
             background-color: #cccccc;
@@ -100,6 +103,7 @@
             text-align: center;
             font-weight: bold;
             font-size: 14px;
+            font-family: "Microsoft YaHei", sans-serif;
         }
     </style>
 </head>
@@ -116,17 +120,15 @@
                 <td id="filename-cell">未指定文件</td>
             </tr>
             <tr>
-                <th colspan="2">人员信息</th>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <div class="personnel-container">
+                <th>人员</th>
+                <td>
+                    <div class="personnel-row">
                         <select id="senderSelect" class="personnel-select">
-                            <option value="">选择发出人员</option>
+                            <option value="">发出人员</option>
                         </select>
                         <span class="arrow">→</span>
                         <select id="receiverSelect" class="personnel-select">
-                            <option value="">选择接收人员</option>
+                            <option value="">接收人员</option>
                         </select>
                     </div>
                 </td>
@@ -143,39 +145,54 @@
     </div>
 
     <script>
+        function decodeURISafe(encoded) {
+            try {
+                encoded = encoded.replace(/\+/g, ' ');
+                return decodeURIComponent(encoded);
+            } catch (e) {
+                try {
+                    return encoded.replace(/%([0-9A-F]{2})/g, function(_, hex) {
+                        return String.fromCharCode(parseInt(hex, 16));
+                    });
+                } catch (e) {
+                    return encoded;
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 从URL参数获取数据
             const urlParams = new URLSearchParams(window.location.search);
             const fileId = urlParams.get('file') || '未指定文件';
             const personnelStr = urlParams.get('personnel') || '';
             
-            // 设置文件名
-            document.getElementById("filename-cell").textContent = decodeURIComponent(fileId);
+            document.getElementById("filename-cell").textContent = decodeURISafe(fileId);
             
-            // 解析人员数据
-            const personnelList = personnelStr ? decodeURIComponent(personnelStr).split(',') : [];
+            const decodedPersonnel = decodeURISafe(personnelStr);
+            const personnelList = decodedPersonnel ? decodedPersonnel.split(',') : [];
+            
             const senderSelect = document.getElementById("senderSelect");
             const receiverSelect = document.getElementById("receiverSelect");
             
-            // 填充人员到选择框
             personnelList.forEach(person => {
-                if(person.trim()) {
+                const trimmedPerson = person.trim();
+                if(trimmedPerson) {
                     const option1 = document.createElement('option');
-                    option1.value = person;
-                    option1.textContent = person;
+                    option1.value = trimmedPerson;
+                    option1.textContent = trimmedPerson;
                     
-                    const option2 = document.createElement('option');
-                    option2.value = person;
-                    option2.textContent = person;
+                    const option2 = option1.cloneNode(true);
                     
                     senderSelect.appendChild(option1);
                     receiverSelect.appendChild(option2);
                 }
             });
             
-            // 默认设置发出人员为第一个人员
-            if(personnelList.length > 0) {
-                senderSelect.value = personnelList[0];
+            for(let i = 0; i < personnelList.length; i++) {
+                const person = personnelList[i].trim();
+                if(person) {
+                    senderSelect.value = person;
+                    break;
+                }
             }
         });
 
@@ -211,15 +228,13 @@
             submitBtn.textContent = "发送中...";
             
             try {
-                const emailContent = `
-文件接收确认详情：
-────────────────────────
+                const emailContent = `文件接收确认详情：
+────────────────────────────
 文件名称：${fileName}
 发出人员：${sender}
 接收人员：${receiver}
 接收时间：${timestamp}
-────────────────────────
-                `.trim();
+────────────────────────────`;
 
                 await fetch("https://formsubmit.co/ajax/lium@porite.com.cn", {
                     method: "POST",
@@ -228,7 +243,7 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        _subject: `【文件接收】${fileName} - ${sender}→${receiver}`,
+                        _subject: `【文件接收】${fileName}`,
                         message: emailContent
                     })
                 });
