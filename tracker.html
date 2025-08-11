@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -8,32 +7,39 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            padding: 15px;
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
         }
         .container {
             border: 2px solid #FF0000;
-            padding: 20px;
+            padding: 25px;
             border-radius: 5px;
             background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: relative;
+            width: 400px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .logo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
             font-size: 20px;
             font-weight: bold;
             color: #FF0000;
+            text-transform: lowercase;
         }
         h2 {
-            color: #FF0000;
+            color: #000000; /* 文件交接改为黑色 */
             font-size: 24px;
+            margin: 0;
             text-align: center;
-            margin: 10px 0 20px;
+            flex-grow: 1;
         }
         .form-group {
             margin-bottom: 15px;
@@ -47,6 +53,10 @@
             width: 60px;
             font-weight: bold;
             margin-right: 5px;
+            color: #000000; /* 标签文字黑色 */
+        }
+        .personnel-label {
+            color: #0000FF; /* 人员标签蓝色 */
         }
         select {
             padding: 6px 8px;
@@ -54,8 +64,8 @@
             border-radius: 3px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 14px;
-            flex: 1;
-            max-width: 150px;
+            width: calc(100% * 2/3 - 70px);
+            color: #0000FF; /* 选择框文字蓝色 */
         }
         .arrow {
             margin: 0 5px;
@@ -63,13 +73,16 @@
             font-weight: bold;
             color: #FF0000;
         }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
         .time-display {
-            color: #666;
+            color: #000000; /* 时间文字黑色 */
             font-size: 14px;
-            margin-top: 5px;
-            padding: 5px;
-            background-color: #f5f5f5;
-            border-radius: 3px;
+            width: 180px;
         }
         button {
             padding: 8px 20px;
@@ -80,9 +93,6 @@
             cursor: pointer;
             font-family: 'Times New Roman', Times, serif;
             font-size: 16px;
-            display: block;
-            margin: 20px auto 0;
-            width: 100px;
         }
         button:hover {
             background-color: #45a049;
@@ -98,31 +108,34 @@
             background-color: #f5f5f5;
             border-radius: 3px;
             font-size: 16px;
+            color: #000000; /* 文件信息黑色 */
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">PORITE</div>
-        <h2>文件交接</h2>
+        <div class="header">
+            <div class="logo">porite</div>
+            <h2>文件交接</h2>
+            <div style="width: 70px;"></div>
+        </div>
         
         <div class="form-group">
             <div class="file-display" id="fileDisplay"></div>
         </div>
         
         <div class="form-row">
-            <label>本人:</label>
+            <label class="personnel-label">本人:</label>
             <select id="sender"></select>
             <span class="arrow">→</span>
-            <label>接收人:</label>
+            <label class="personnel-label">接收人:</label>
             <select id="receiver"></select>
         </div>
         
-        <div class="form-group">
+        <div class="footer">
             <div class="time-display" id="timeDisplay"></div>
+            <button id="submitBtn" onclick="submitForm()">提交</button>
         </div>
-        
-        <button id="submitBtn" onclick="submitForm()">提交</button>
     </div>
 
     <script>
@@ -135,36 +148,51 @@
             };
         }
 
-        // 检测企业微信环境并获取用户
+        // 获取企业微信用户信息
         function getWeComUser() {
-            // 企业微信API获取当前用户
-            // 实际使用时需要接入企业微信JS-SDK
-            // 这里用模拟数据演示
-            if(window.navigator.userAgent.toLowerCase().indexOf('wxwork') > -1) {
-                return '企业微信用户'; // 实际使用时应替换为真实获取逻辑
-            }
-            return null;
+            return new Promise((resolve) => {
+                if (window.__wxjs_environment === 'wxwork' || 
+                    navigator.userAgent.toLowerCase().indexOf('wxwork') > -1) {
+                    if (window.wx && wx.invoke) {
+                        wx.invoke('getContext', {}, function(res) {
+                            if (res.err_msg === 'getContext:ok') {
+                                wx.invoke('getUserInfo', {
+                                    corpid: res.corpId,
+                                    userId: res.userId
+                                }, function(userRes) {
+                                    if (userRes.err_msg === 'getUserInfo:ok') {
+                                        resolve(userRes.userInfo.name);
+                                    } else {
+                                        resolve(null);
+                                    }
+                                });
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                    } else {
+                        setTimeout(() => resolve('企业微信用户'), 300);
+                    }
+                } else {
+                    resolve(null);
+                }
+            });
         }
 
         // 初始化页面
-        function init() {
+        async function init() {
             const params = getUrlParams();
-            const currentFile = params.file;
-            document.getElementById('fileDisplay').textContent = "文件: " + currentFile;
+            document.getElementById('fileDisplay').textContent = "文件名称: " + params.file;
             
-            // 显示当前时间
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000);
             
-            // 获取企业微信用户(如果是在企业微信中打开)
-            const weComUser = getWeComUser();
+            const weComUser = await getWeComUser();
             
-            // 填充人员下拉框
             const personnel = params.personnel.filter(p => p.trim() !== '');
             const senderSelect = document.getElementById('sender');
             const receiverSelect = document.getElementById('receiver');
             
-            // 添加人员选项
             personnel.forEach(person => {
                 const option = document.createElement('option');
                 option.value = person;
@@ -173,17 +201,18 @@
                 receiverSelect.appendChild(option.cloneNode(true));
             });
             
-            // 设置默认发送人(企业微信用户优先)
-            if(weComUser) {
-                const option = document.createElement('option');
-                option.value = weComUser;
-                option.textContent = weComUser;
-                senderSelect.insertBefore(option, senderSelect.firstChild);
+            if (weComUser) {
+                const existingOption = [...senderSelect.options].find(opt => opt.value === weComUser);
+                if (!existingOption) {
+                    const option = document.createElement('option');
+                    option.value = weComUser;
+                    option.textContent = weComUser;
+                    senderSelect.insertBefore(option, senderSelect.firstChild);
+                }
                 senderSelect.value = weComUser;
             }
             
-            // 检查是否已提交
-            if(sessionStorage.getItem('submitted_' + encodeURIComponent(currentFile))) {
+            if (sessionStorage.getItem('submitted_' + encodeURIComponent(params.file))) {
                 disableForm();
             }
         }
@@ -192,17 +221,17 @@
         function updateTimeDisplay() {
             const now = new Date();
             const timeString = now.getFullYear() + '-' + 
-                             String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(now.getDate()).padStart(2, '0') + ' ' + 
-                             String(now.getHours()).padStart(2, '0') + ':' + 
-                             String(now.getMinutes()).padStart(2, '0') + ':' + 
-                             String(now.getSeconds()).padStart(2, '0');
+                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(now.getDate()).padStart(2, '0') + ' ' + 
+                String(now.getHours()).padStart(2, '0') + ':' + 
+                String(now.getMinutes()).padStart(2, '0') + ':' + 
+                String(now.getSeconds()).padStart(2, '0');
             
-            document.getElementById('timeDisplay').textContent = "时间: " + timeString;
+            document.getElementById('timeDisplay').textContent = "交接时间: " + timeString;
             return timeString;
         }
 
-        // 禁用表单(已提交状态)
+        // 禁用表单
         function disableForm() {
             document.getElementById('sender').disabled = true;
             document.getElementById('receiver').disabled = true;
@@ -217,26 +246,24 @@
             const sender = document.getElementById('sender').value;
             const receiver = document.getElementById('receiver').value;
             const file = getUrlParams().file;
-            const time = updateTimeDisplay();
+            const time = document.getElementById('timeDisplay').textContent.replace('交接时间: ', '');
             
-            if(!sender || !receiver) {
+            if (!sender || !receiver) {
                 alert('请选择本人和接收人');
                 return;
             }
             
-            if(sender === receiver) {
+            if (sender === receiver) {
                 alert('本人和接收人不能相同');
                 return;
             }
             
-            // 构造邮件内容(确保正确换行)
+            // 邮件正文格式
             const subject = `【文件交接】${file}_${sender} → ${receiver}`;
-            const body = `文件: ${file}\n时间: ${time}\n交接: ${sender} → ${receiver}`;
+            const body = `文件名称: ${file}\n交接时间: ${time}\n交接人员: ${sender} → ${receiver}`;
             
-            // 发送邮件
             window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             
-            // 标记为已提交(使用sessionStorage，只在当前会话有效)
             sessionStorage.setItem('submitted_' + encodeURIComponent(file), 'true');
             disableForm();
             
