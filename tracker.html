@@ -4,47 +4,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人员交接</title>
+    <title>文件交接</title>
     <style>
-        body { font-family: Arial; padding: 20px; max-width: 500px; margin: 0 auto; }
-        .form-group { margin-bottom: 15px; }
-        .form-row { display: flex; align-items: center; margin-bottom: 10px; }
-        label { min-width: 80px; }
-        input { padding: 8px; border: 1px solid #ddd; border-radius: 3px; }
-        button { 
-            padding: 8px 20px; 
-            background-color: #4CAF50; 
-            color: white; 
-            border: none; 
-            border-radius: 3px; 
-            cursor: pointer; 
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
         }
-        button:hover { background-color: #45a049; }
-        .arrow { margin: 0 10px; font-size: 18px; }
-        .time-display { color: #666; font-size: 14px; margin-top: 5px; }
+        .container {
+            border: 2px solid #FF0000;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h2 {
+            color: #FF0000;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        label {
+            min-width: 80px;
+            font-weight: bold;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        select {
+            width: 150px;
+        }
+        .arrow {
+            margin: 0 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .time-display {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        button {
+            padding: 8px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .file-display {
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
-    <h2>人员交接</h2>
-    
-    <div class="form-group">
-        <label>文件:</label>
-        <div id="fileDisplay" style="font-weight:bold;"></div>
+    <div class="container">
+        <h2>文件交接</h2>
+        
+        <div class="form-group">
+            <div class="file-display" id="fileDisplay"></div>
+        </div>
+        
+        <div class="form-row">
+            <label for="sender">本人:</label>
+            <select id="sender"></select>
+            <span class="arrow">→</span>
+            <label for="receiver">接收人:</label>
+            <select id="receiver"></select>
+        </div>
+        
+        <div class="form-group">
+            <div class="time-display" id="timeDisplay"></div>
+        </div>
+        
+        <button id="submitBtn" onclick="submitForm()">提交</button>
     </div>
-    
-    <div class="form-row">
-        <label for="sender">本人:</label>
-        <input type="text" id="sender" style="width:120px;">
-        <span class="arrow">→</span>
-        <label for="receiver">接收人:</label>
-        <input type="text" id="receiver" style="width:120px;">
-    </div>
-    
-    <div class="form-group">
-        <div class="time-display" id="timeDisplay"></div>
-    </div>
-    
-    <button onclick="submitForm()">提交</button>
 
     <script>
         // 解析URL参数
@@ -59,50 +118,91 @@
         // 初始化页面
         function init() {
             const params = getUrlParams();
-            document.getElementById('fileDisplay').textContent = params.file;
+            document.getElementById('fileDisplay').textContent = "文件: " + params.file;
             
             // 显示当前时间
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000);
             
-            // 自动填充第一个人员作为默认发送人
-            if(params.personnel.length > 0) {
-                document.getElementById('sender').value = params.personnel[0];
+            // 填充人员下拉框
+            const personnel = params.personnel.filter(p => p.trim() !== '');
+            const senderSelect = document.getElementById('sender');
+            const receiverSelect = document.getElementById('receiver');
+            
+            // 添加默认空选项
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = '-- 请选择 --';
+            senderSelect.appendChild(emptyOption.cloneNode(true));
+            receiverSelect.appendChild(emptyOption.cloneNode(true));
+            
+            // 添加人员选项
+            personnel.forEach(person => {
+                const option = document.createElement('option');
+                option.value = person;
+                option.textContent = person;
+                senderSelect.appendChild(option.cloneNode(true));
+                receiverSelect.appendChild(option.cloneNode(true));
+            });
+            
+            // 检查是否已提交
+            if(localStorage.getItem('submitted_' + params.file)) {
+                disableForm();
             }
         }
 
         // 更新时间显示
         function updateTimeDisplay() {
             const now = new Date();
-            document.getElementById('timeDisplay').textContent = 
-                "提交时间: " + now.toLocaleString('zh-CN', { 
-                    year: 'numeric', 
-                    month: '2-digit', 
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                }).replace(/\//g, '-');
+            const timeString = now.getFullYear() + '-' + 
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(now.getDate()).padStart(2, '0') + ' ' + 
+                              String(now.getHours()).padStart(2, '0') + ':' + 
+                              String(now.getMinutes()).padStart(2, '0') + ':' + 
+                              String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('timeDisplay').textContent = "时间: " + timeString;
+        }
+
+        // 禁用表单（已提交状态）
+        function disableForm() {
+            document.getElementById('sender').disabled = true;
+            document.getElementById('receiver').disabled = true;
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = '已提交';
+            btn.style.backgroundColor = '#cccccc';
         }
 
         // 提交表单
         function submitForm() {
-            const sender = document.getElementById('sender').value.trim();
-            const receiver = document.getElementById('receiver').value.trim();
+            const sender = document.getElementById('sender').value;
+            const receiver = document.getElementById('receiver').value;
             const file = getUrlParams().file;
-            const time = document.getElementById('timeDisplay').textContent.replace('提交时间: ', '');
+            const time = document.getElementById('timeDisplay').textContent.replace('时间: ', '');
             
             if(!sender || !receiver) {
-                alert('请填写本人和接收人信息');
+                alert('请选择本人和接收人');
+                return;
+            }
+            
+            if(sender === receiver) {
+                alert('本人和接收人不能相同');
                 return;
             }
             
             // 构造邮件内容
-            const subject = `人员交接确认: ${file}`;
+            const subject = `【文件交接】${file}_${sender} → ${receiver}`;
             const body = `文件: ${file}\n时间: ${time}\n交接: ${sender} → ${receiver}`;
             
             // 发送邮件
             window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // 标记为已提交
+            localStorage.setItem('submitted_' + file, 'true');
+            disableForm();
+            
+            alert('即将打开邮件客户端，请确认发送');
         }
 
         // 页面加载时初始化
