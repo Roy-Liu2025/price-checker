@@ -36,27 +36,30 @@
         }
         h2 {
             color: #000000;
-            font-size: 20px; /* 调小文件交接字体 */
+            font-size: 20px;
             margin: 0;
             text-align: center;
             flex-grow: 1;
         }
-        .form-group {
-            margin-bottom: 12px;
+        .file-display {
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #000000;
         }
-        .form-row {
+        .personnel-container {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
-        }
-        label {
-            width: 60px;
-            font-weight: bold;
-            margin-right: 5px;
-            color: #000000;
+            margin-bottom: 15px;
         }
         .personnel-label {
             color: #0000FF;
+            font-weight: bold;
+            margin-right: 5px;
+            width: 50px;
         }
         select {
             padding: 6px 8px;
@@ -64,7 +67,7 @@
             border-radius: 3px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 14px;
-            width: 100px; /* 调窄人员输入框宽度 */
+            width: 100px;
             color: #0000FF;
         }
         .arrow {
@@ -77,13 +80,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
         }
         .time-display {
             color: #000000;
             font-size: 14px;
-            width: 220px; /* 调宽时间显示区域 */
-            white-space: nowrap;
+            width: 220px;
         }
         button {
             padding: 6px 15px;
@@ -103,25 +104,6 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        .file-display {
-            font-weight: bold;
-            margin-bottom: 12px;
-            padding: 8px;
-            background-color: #f5f5f5;
-            border-radius: 3px;
-            font-size: 14px;
-            color: #000000;
-        }
-        .personnel-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .personnel-name {
-            color: #0000FF;
-            margin: 0 5px;
-            min-width: 80px;
-        }
     </style>
 </head>
 <body>
@@ -132,15 +114,13 @@
             <div style="width: 60px;"></div>
         </div>
         
-        <div class="form-group">
-            <div class="file-display" id="fileDisplay"></div>
-        </div>
+        <div class="file-display" id="fileDisplay"></div>
         
         <div class="personnel-container">
-            <label class="personnel-label">本人:</label>
+            <div class="personnel-label">本人:</div>
             <select id="sender"></select>
             <span class="arrow">→</span>
-            <label class="personnel-label">接收人:</label>
+            <div class="personnel-label">接收人:</div>
             <select id="receiver"></select>
         </div>
         
@@ -160,11 +140,14 @@
             };
         }
 
-        // 获取企业微信用户信息
-        function getWeComUser() {
+        // 获取企业微信用户真实姓名
+        function getWeComUserName() {
             return new Promise((resolve) => {
+                // 实际企业微信环境
                 if (window.__wxjs_environment === 'wxwork' || 
                     navigator.userAgent.toLowerCase().indexOf('wxwork') > -1) {
+                    
+                    // 企业微信JS-SDK获取用户真实姓名
                     if (window.wx && wx.invoke) {
                         wx.invoke('getContext', {}, function(res) {
                             if (res.err_msg === 'getContext:ok') {
@@ -173,17 +156,20 @@
                                     userId: res.userId
                                 }, function(userRes) {
                                     if (userRes.err_msg === 'getUserInfo:ok') {
-                                        resolve(userRes.userInfo.name);
+                                        resolve(userRes.userInfo.name || '企业微信用户');
                                     } else {
-                                        resolve(null);
+                                        resolve('企业微信用户');
                                     }
                                 });
                             } else {
-                                resolve(null);
+                                resolve('企业微信用户');
                             }
                         });
-                    } else {
-                        setTimeout(() => resolve('企业微信用户'), 300);
+                    } 
+                    // 测试环境使用模拟数据
+                    else {
+                        // 这里应该显示真实姓名，模拟为"当前用户"
+                        resolve('当前用户'); 
                     }
                 } else {
                     resolve(null);
@@ -199,12 +185,15 @@
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000);
             
-            const weComUser = await getWeComUser();
+            // 获取企业微信用户真实姓名
+            const weComUser = await getWeComUserName();
             
+            // 填充人员下拉框
             const personnel = params.personnel.filter(p => p.trim() !== '');
             const senderSelect = document.getElementById('sender');
             const receiverSelect = document.getElementById('receiver');
             
+            // 添加人员选项
             personnel.forEach(person => {
                 const option = document.createElement('option');
                 option.value = person;
@@ -213,9 +202,18 @@
                 receiverSelect.appendChild(option.cloneNode(true));
             });
             
+            // 设置企业微信用户为默认发送人
             if (weComUser) {
-                const existingOption = [...senderSelect.options].find(opt => opt.value === weComUser);
-                if (!existingOption) {
+                // 先检查是否已在选项中
+                let userExists = false;
+                for (let i = 0; i < senderSelect.options.length; i++) {
+                    if (senderSelect.options[i].value === weComUser) {
+                        userExists = true;
+                        break;
+                    }
+                }
+                
+                if (!userExists) {
                     const option = document.createElement('option');
                     option.value = weComUser;
                     option.textContent = weComUser;
@@ -224,6 +222,7 @@
                 senderSelect.value = weComUser;
             }
             
+            // 检查是否已提交
             if (sessionStorage.getItem('submitted_' + encodeURIComponent(params.file))) {
                 disableForm();
             }
@@ -270,6 +269,7 @@
                 return;
             }
             
+            // 严格按照要求的邮件正文格式
             const subject = `【文件交接】${file}_${sender} → ${receiver}`;
             const body = `文件名称: ${file}\n交接时间: ${time}\n交接人员: ${sender} → ${receiver}`;
             
