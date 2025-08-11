@@ -60,23 +60,24 @@
         .file-table th {
             background-color: #f2f2f2;
         }
-        .input-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 15px 0 10px;
-            gap: 30px; /* 新增：输入框和按钮之间的间距 */
-        }
-        .input-group {
-            flex: 0 0 80px;
-        }
-        .input-group input {
-            width: 100%;
+        .personnel-select {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
-            text-align: center;
+            min-width: 120px;
+            max-width: 150px;
+        }
+        .personnel-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .arrow {
+            font-size: 20px;
+            color: #666;
         }
         .submit-btn {
             padding: 8px 12px;
@@ -87,6 +88,8 @@
             font-size: 16px;
             cursor: pointer;
             white-space: nowrap;
+            display: block;
+            margin: 15px auto;
         }
         .submit-btn:disabled {
             background-color: #cccccc;
@@ -113,48 +116,84 @@
                 <td id="filename-cell">未指定文件</td>
             </tr>
             <tr>
-                <th>接受人员</th>
-                <td id="receiver-cell">????</td>
+                <th colspan="2">人员信息</th>
             </tr>
             <tr>
-                <th>接受时间</th>
+                <td colspan="2">
+                    <div class="personnel-container">
+                        <select id="senderSelect" class="personnel-select">
+                            <option value="">选择发出人员</option>
+                        </select>
+                        <span class="arrow">→</span>
+                        <select id="receiverSelect" class="personnel-select">
+                            <option value="">选择接收人员</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th>接收时间</th>
                 <td id="time-cell">待确认</td>
             </tr>
         </table>
 
-        <div class="input-row">
-            <div class="input-group">
-                <input type="text" id="userInput" placeholder="姓名">
-            </div>
-            <button id="submitBtn" class="submit-btn">确认接收</button>
-        </div>
+        <button id="submitBtn" class="submit-btn">确认接收</button>
 
         <div id="resultMsg" class="result-msg"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('userInput');
-            input.addEventListener('focus', function() {
-                window.scrollTo(0, 0);
-                document.body.scrollTop = 0;
+            // 从URL参数获取数据
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileId = urlParams.get('file') || '未指定文件';
+            const personnelStr = urlParams.get('personnel') || '';
+            
+            // 设置文件名
+            document.getElementById("filename-cell").textContent = decodeURIComponent(fileId);
+            
+            // 解析人员数据
+            const personnelList = personnelStr ? decodeURIComponent(personnelStr).split(',') : [];
+            const senderSelect = document.getElementById("senderSelect");
+            const receiverSelect = document.getElementById("receiverSelect");
+            
+            // 填充人员到选择框
+            personnelList.forEach(person => {
+                if(person.trim()) {
+                    const option1 = document.createElement('option');
+                    option1.value = person;
+                    option1.textContent = person;
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = person;
+                    option2.textContent = person;
+                    
+                    senderSelect.appendChild(option1);
+                    receiverSelect.appendChild(option2);
+                }
             });
+            
+            // 默认设置发出人员为第一个人员
+            if(personnelList.length > 0) {
+                senderSelect.value = personnelList[0];
+            }
         });
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('file') || '未指定文件';
-        document.getElementById("filename-cell").textContent = fileId;
 
         const submitBtn = document.getElementById("submitBtn");
         const resultMsg = document.getElementById("resultMsg");
-        const userInput = document.getElementById("userInput");
         
         submitBtn.addEventListener('click', async function() {
-            const userName = userInput.value.trim();
+            const sender = document.getElementById("senderSelect").value;
+            const receiver = document.getElementById("receiverSelect").value;
             const fileName = document.getElementById("filename-cell").textContent;
             
-            if (!userName) {
-                alert("请输入您的姓名");
+            if (!sender || !receiver) {
+                alert("请选择发出人员和接收人员");
+                return;
+            }
+            
+            if(sender === receiver) {
+                alert("发出人员和接收人员不能相同");
                 return;
             }
             
@@ -167,7 +206,6 @@
                 hour12: false
             }).replace(/\//g, '-');
 
-            document.getElementById("receiver-cell").textContent = userName;
             document.getElementById("time-cell").textContent = timestamp;
             submitBtn.disabled = true;
             submitBtn.textContent = "发送中...";
@@ -177,8 +215,9 @@
 文件接收确认详情：
 ────────────────────────
 文件名称：${fileName}
-接受人员：${userName}
-接受时间：${timestamp}
+发出人员：${sender}
+接收人员：${receiver}
+接收时间：${timestamp}
 ────────────────────────
                 `.trim();
 
@@ -189,7 +228,7 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        _subject: `【文件接收】${fileName} - ${userName}`,
+                        _subject: `【文件接收】${fileName} - ${sender}→${receiver}`,
                         message: emailContent
                     })
                 });
@@ -201,11 +240,9 @@
                 resultMsg.innerHTML = '<span style="color:red;">❌ 提交失败，请检查网络</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = "确认接收";
-                document.getElementById("receiver-cell").textContent = "????";
                 document.getElementById("time-cell").textContent = "待确认";
             }
         });
     </script>
 </body>
 </html>
-
