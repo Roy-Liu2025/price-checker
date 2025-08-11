@@ -16,47 +16,47 @@
         }
         .container {
             border: 2px solid #FF0000;
-            padding: 25px;
+            padding: 20px;
             border-radius: 5px;
             background-color: white;
-            width: 400px;
+            width: 380px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .logo {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #FF0000;
             text-transform: lowercase;
         }
         h2 {
-            color: #000000; /* 文件交接改为黑色 */
-            font-size: 24px;
+            color: #000000;
+            font-size: 20px; /* 调小文件交接字体 */
             margin: 0;
             text-align: center;
             flex-grow: 1;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .form-row {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         label {
             width: 60px;
             font-weight: bold;
             margin-right: 5px;
-            color: #000000; /* 标签文字黑色 */
+            color: #000000;
         }
         .personnel-label {
-            color: #0000FF; /* 人员标签蓝色 */
+            color: #0000FF;
         }
         select {
             padding: 6px 8px;
@@ -64,8 +64,8 @@
             border-radius: 3px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 14px;
-            width: calc(100% * 2/3 - 70px);
-            color: #0000FF; /* 选择框文字蓝色 */
+            width: 100px; /* 调窄人员输入框宽度 */
+            color: #0000FF;
         }
         .arrow {
             margin: 0 5px;
@@ -77,22 +77,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .time-display {
-            color: #000000; /* 时间文字黑色 */
+            color: #000000;
             font-size: 14px;
-            width: 180px;
+            width: 220px; /* 调宽时间显示区域 */
+            white-space: nowrap;
         }
         button {
-            padding: 8px 20px;
+            padding: 6px 15px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
             font-family: 'Times New Roman', Times, serif;
-            font-size: 16px;
+            font-size: 14px;
+            min-width: 80px;
         }
         button:hover {
             background-color: #45a049;
@@ -103,12 +105,22 @@
         }
         .file-display {
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             padding: 8px;
             background-color: #f5f5f5;
             border-radius: 3px;
-            font-size: 16px;
-            color: #000000; /* 文件信息黑色 */
+            font-size: 14px;
+            color: #000000;
+        }
+        .personnel-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .personnel-name {
+            color: #0000FF;
+            margin: 0 5px;
+            min-width: 80px;
         }
     </style>
 </head>
@@ -117,14 +129,14 @@
         <div class="header">
             <div class="logo">porite</div>
             <h2>文件交接</h2>
-            <div style="width: 70px;"></div>
+            <div style="width: 60px;"></div>
         </div>
         
         <div class="form-group">
             <div class="file-display" id="fileDisplay"></div>
         </div>
         
-        <div class="form-row">
+        <div class="personnel-container">
             <label class="personnel-label">本人:</label>
             <select id="sender"></select>
             <span class="arrow">→</span>
@@ -258,7 +270,6 @@
                 return;
             }
             
-            // 邮件正文格式
             const subject = `【文件交接】${file}_${sender} → ${receiver}`;
             const body = `文件名称: ${file}\n交接时间: ${time}\n交接人员: ${sender} → ${receiver}`;
             
