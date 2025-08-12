@@ -128,7 +128,7 @@
             <div class="personnel-label">本人</div>
             <select id="sender"></select>
             <span class="arrow">→</span>
-            <div class="personnel-label">接收</div>
+            <div class="personnel-label">接收人</div>
             <select id="receiver"></select>
         </div>
         
@@ -249,7 +249,7 @@
             btn.style.backgroundColor = '#cccccc';
         }
 
-        // 提交表单（确保三行格式）
+        // 提交表单（Foxmail专用格式）
         function submitForm() {
             const sender = document.getElementById('sender').value;
             const receiver = document.getElementById('receiver').value;
@@ -266,19 +266,19 @@
                 return;
             }
             
-            // 严格三行格式
+            // Foxmail专用格式：使用%0D%0A作为换行符
             const subject = `【文件交接】${file}_${sender} → ${receiver}`;
             const body = 
-`文件名称: ${file}
-交接时间: ${time}
-交接人员: ${sender} → ${receiver}`;
+`文件名称: ${file}%0D%0A` +
+`交接时间: ${time}%0D%0A` +
+`交接人员: ${sender} → ${receiver}`;
             
-            window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = `mailto:lium@porite.com.cn?subject=${encodeURIComponent(subject)}&body=${body}`;
             
             sessionStorage.setItem('submitted_' + encodeURIComponent(file), 'true');
             disableForm();
             
-            alert('即将打开邮件客户端，请确认发送');
+            alert('即将打开Foxmail客户端，请确认发送');
         }
 
         // 页面加载时初始化
@@ -286,5 +286,3 @@
     </script>
 </body>
 </html>
-
-
